@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/GustavoCoutino/PathExplorerBackend/issues"
   },
-  "homepage": "https://github.com/GustavoCoutino/PathExplorerBackend#readme"
+  "homepage": "https://github.com/GustavoCoutino/PathExplorerBackend#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.14.1"
+  }
 }
