@@ -6,11 +6,10 @@ const auth = require("../middleware/auth");
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Email y contraseña son requeridos",
       });
     }
 
@@ -19,22 +18,24 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Credenciales inválidas",
       });
     }
 
-    if (!user.password) {
+    if (!user.password_hash) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Credenciales inválidas",
       });
     }
-    const isValid = await bcrypt.compare(password, user.password);
+    // Todavia no estan hasheados en la base de datos
+    //const isValid = await bcrypt.compare(password, user.password_hash);
+    const isValid = password === user.password_hash;
 
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Credenciales inválidas",
       });
     }
 

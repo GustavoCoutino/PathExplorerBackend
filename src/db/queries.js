@@ -35,7 +35,7 @@ const determineUserType = async (id_persona) => {
 
     if (adminResult.rows.length > 0) {
       return {
-        role: "administrator",
+        role: "administrador",
         roleData: adminResult.rows[0],
       };
     }
@@ -59,13 +59,13 @@ const determineUserType = async (id_persona) => {
 
     if (employeeResult.rows.length > 0) {
       return {
-        role: "employee",
+        role: "empleado",
         roleData: employeeResult.rows[0],
       };
     }
 
     return {
-      role: "user",
+      role: "usuario",
       roleData: null,
     };
   } catch (error) {
