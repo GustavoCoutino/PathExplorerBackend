@@ -5,5 +5,6 @@ const auth = require("../middleware/auth");
 
 router.post("/login", userController.login);
 router.get("/me", auth.authenticateJWT, userController.getUserProfile);
+router.patch("/update", auth.authenticateJWT, userController.updateUserProfile);
 
 module.exports = router;

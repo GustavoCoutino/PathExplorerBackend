@@ -113,7 +113,73 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+    const { nombre, apellido, correo, cargo } = req.body;
+
+    if (!nombre || !apellido || !correo) {
+      return res.status(400).json({
+        success: false,
+        message: "Nombre, apellido y correo son requeridos",
+      });
+    }
+
+    const existingUser = await userQueries.findUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    const profileData = {
+      nombre,
+      apellido,
+      correo,
+      cargo,
+    };
+
+    const updatedUser = await userQueries.editUserProfile(userId, profileData);
+    if (!updatedUser || !updatedUser.persona) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al actualizar el perfil - respuesta incompleta",
+      });
+    }
+
+    const userTypeInfo = await userQueries.determineUserType(userId);
+    const profileInfo = await userQueries.getUserProfile(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Perfil actualizado con éxito",
+      user: {
+        id_persona: existingUser.id_persona,
+        nombre: updatedUser.persona.nombre || existingUser.nombre,
+        apellido: updatedUser.persona.apellido || existingUser.apellido,
+        email: updatedUser.persona.correo || existingUser.email,
+        fecha_contratacion: existingUser.fecha_contratacion,
+        role: userTypeInfo.role,
+        roleData: userTypeInfo.roleData,
+        profile: {
+          ...profileInfo,
+          puesto_actual:
+            updatedUser.perfil?.puesto_actual || profileInfo.puesto_actual,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Update user profile error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar el perfil del usuario",
+    });
+  }
+};
+
 module.exports = {
   login,
   getUserProfile,
+  updateUserProfile,
 };

@@ -87,9 +87,45 @@ const getUserProfile = async (id_persona) => {
   }
 };
 
+const editUserProfile = async (id_persona, profileData) => {
+  try {
+    const { nombre, apellido, correo, cargo } = profileData;
+
+    const personaResult = await db.query(
+      `
+      UPDATE personas.persona 
+      SET nombre = $1, apellido = $2, email = $3
+      WHERE id_persona = $4
+      RETURNING id_persona, nombre, apellido, email
+    `,
+      [nombre, apellido, correo, id_persona]
+    );
+
+    const perfilResult = await db.query(
+      `
+      UPDATE personas.perfil
+      SET puesto_actual = $1
+      WHERE id_persona = $2
+      RETURNING id_perfil, puesto_actual
+    `,
+      [cargo, id_persona]
+    );
+
+    return {
+      persona: personaResult.rows[0],
+      perfil: perfilResult.rows[0],
+      message: "Perfil actualizado con éxito",
+    };
+  } catch (error) {
+    console.error("Error al actualizar el perfil del usuario:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   findUserByEmail,
   findUserById,
   determineUserType,
   getUserProfile,
+  editUserProfile,
 };
