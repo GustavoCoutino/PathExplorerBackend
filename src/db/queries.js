@@ -122,10 +122,59 @@ const editUserProfile = async (id_persona, profileData) => {
   }
 };
 
+const getUserCertifications = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT c.ID_Certificacion, c.Nombre, c.Institucion, c.Validez, c.Nivel
+      FROM desarrollo.certificacion c
+      JOIN desarrollo.persona_certificacion pc ON c.ID_Certificacion = pc.ID_Certificacion
+      WHERE pc.ID_Persona = $1
+      `,
+      [id_persona]
+    );
+    console.log("Certification query result:", result.rows);
+    return result.rows || [];
+  } catch (error) {
+    console.error("SQL Error getting user certifications:", error);
+    throw error;
+  }
+};
+
+const getUserProfessionalHistory = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT 
+          p.Nombre,
+          p.Apellido,
+          pf.Historial_Profesional,
+          pf.Puesto_Actual AS Role,
+          m.Descripcion AS Achievements
+      FROM 
+          personas.PERSONA p
+      JOIN 
+          personas.PERFIL pf ON p.ID_Persona = pf.ID_Perfil
+      LEFT JOIN
+          desarrollo.META_PROFESIONAL m ON p.ID_Persona = m.ID_Meta
+      WHERE
+          p.ID_Persona = $1
+      `,
+      [id_persona]
+    );
+    return result.rows || [];
+  } catch (error) {
+    console.error("Error getting user professional history:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   findUserByEmail,
   findUserById,
   determineUserType,
   getUserProfile,
   editUserProfile,
+  getUserCertifications,
+  getUserProfessionalHistory,
 };
