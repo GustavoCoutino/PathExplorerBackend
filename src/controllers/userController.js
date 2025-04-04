@@ -178,43 +178,38 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-// Add this function to your userController.js file
-
-// Keep only controller functions, not routes
 const getUserCertifications = async (req, res) => {
   try {
     console.log("Usuario autenticado:", req.user);
     const userId = req.user.id_persona;
-    
+
     if (!userId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID missing" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID missing",
       });
     }
-    
-    // Call the updated query function
+
     const certifications = await userQueries.getUserCertifications(userId);
-    
-    // Transform field names to match what frontend expects if needed
-    const formattedCertifications = certifications.map(cert => ({
+
+    const formattedCertifications = certifications.map((cert) => ({
       ID_Certificacion: cert.id_certificacion,
       Nombre: cert.nombre,
       Institucion: cert.institucion,
       Validez: cert.validez,
-      Nivel: cert.nivel
+      Nivel: cert.nivel,
     }));
-    
-    return res.status(200).json({ 
-      success: true, 
-      certifications: formattedCertifications 
+
+    return res.status(200).json({
+      success: true,
+      certifications: formattedCertifications,
     });
   } catch (error) {
     console.error("Get user certifications error:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener certificaciones",
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -222,58 +217,64 @@ const getUserCertifications = async (req, res) => {
 const getUserProfessionalHistory = async (req, res) => {
   try {
     const userId = req.user.id_persona;
-    
+
     console.log("Request received for professional history. User ID:", userId);
-    
+
     if (!userId) {
       console.log("User ID missing in request");
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID missing" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID missing",
       });
     }
-    
-    // Call the professional history query function
+
     console.log("Calling database query with user ID:", userId);
-    const professionalHistoryResults = await userQueries.getUserProfessionalHistory(userId);
-    
-    console.log("Database query results:", JSON.stringify(professionalHistoryResults, null, 2));
-    
-    if (!professionalHistoryResults || professionalHistoryResults.length === 0) {
+    const professionalHistoryResults =
+      await userQueries.getUserProfessionalHistory(userId);
+
+    console.log(
+      "Database query results:",
+      JSON.stringify(professionalHistoryResults, null, 2)
+    );
+
+    if (
+      !professionalHistoryResults ||
+      professionalHistoryResults.length === 0
+    ) {
       console.log("No professional history found for user");
       return res.status(404).json({
         success: false,
-        message: "Professional history not found for this user"
+        message: "Professional history not found for this user",
       });
     }
-    
-    // Format the results
-    const formattedHistory = professionalHistoryResults.map(entry => ({
+
+    const formattedHistory = professionalHistoryResults.map((entry) => ({
       nombre: entry.nombre,
       apellido: entry.apellido,
       historial: entry.historial_profesional,
       role: entry.role,
-      achievements: entry.achievements
+      achievements: entry.achievements,
     }));
-    
-    console.log("Formatted history being sent to frontend:", JSON.stringify(formattedHistory, null, 2));
-    
-    return res.status(200).json({ 
-      success: true, 
-      professionalHistory: formattedHistory
+
+    console.log(
+      "Formatted history being sent to frontend:",
+      JSON.stringify(formattedHistory, null, 2)
+    );
+
+    return res.status(200).json({
+      success: true,
+      professionalHistory: formattedHistory,
     });
   } catch (error) {
     console.error("Get user professional history error:", error);
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: "Error al obtener historial profesional",
-      error: error.message 
+      error: error.message,
     });
   }
 };
 
-
-// Update your module.exports to include the new function
 module.exports = {
   login,
   getUserProfile,

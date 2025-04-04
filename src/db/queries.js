@@ -124,7 +124,6 @@ const editUserProfile = async (id_persona, profileData) => {
 
 const getUserCertifications = async (id_persona) => {
   try {
-    // Adjust this query to match your actual table and column names
     const result = await db.query(
       `
       SELECT c.ID_Certificacion, c.Nombre, c.Institucion, c.Validez, c.Nivel

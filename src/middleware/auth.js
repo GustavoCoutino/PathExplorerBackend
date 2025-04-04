@@ -51,20 +51,19 @@ const generateToken = (user) => {
   );
 };
 
-// Add some debugging to your authenticateJWT middleware
 const authenticateJWT = (req, res, next) => {
-  passport.authenticate('jwt', { session: false }, (err, user) => {
+  passport.authenticate("jwt", { session: false }, (err, user) => {
     if (err) {
-      console.error('JWT Auth Error:', err);
-      return res.status(500).json({ success: false, message: 'Auth error' });
+      console.error("JWT Auth Error:", err);
+      return res.status(500).json({ success: false, message: "Auth error" });
     }
-    
+
     if (!user) {
-      console.log('No user found from token');
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      console.log("No user found from token");
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-    
-    console.log('User authenticated successfully:', user);
+
+    console.log("User authenticated successfully:", user);
     req.user = user;
     return next();
   })(req, res, next);
@@ -132,7 +131,6 @@ const getCurrentUser = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   initializePassport,
