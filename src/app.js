@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 const auth = require("./middleware/auth");
 const error = require("./middleware/error");
 const authRoutes = require("./routes/authRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 auth.initializePassport(app);
 
 app.use("/api/auth", authRoutes);
+app.use("/api/projects", auth.authenticateJWT, projectRoutes);
 app.use(error);
 
 app.listen(PORT, () => {
