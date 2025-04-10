@@ -59,11 +59,8 @@ const authenticateJWT = (req, res, next) => {
     }
 
     if (!user) {
-      console.log("No user found from token");
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-
-    console.log("User authenticated successfully:", user);
     req.user = user;
     return next();
   })(req, res, next);
