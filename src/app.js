@@ -7,6 +7,7 @@ const auth = require("./middleware/auth");
 const error = require("./middleware/error");
 const authRoutes = require("./routes/authRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const bancaRoutes = require("./routes/bancaRoutes");
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ auth.initializePassport(app);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", auth.authenticateJWT, projectRoutes);
+app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use(error);
 
 app.listen(PORT, () => {
