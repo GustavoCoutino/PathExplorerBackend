@@ -12,7 +12,7 @@ const bancaRoutes = require("./routes/bancaRoutes");
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 app.use(helmet());
 
@@ -30,8 +30,8 @@ app.use("/api/projects", auth.authenticateJWT, projectRoutes);
 app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use(error);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
 module.exports = app;
