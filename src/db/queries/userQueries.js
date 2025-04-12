@@ -1,4 +1,4 @@
-const db = require("./pool");
+const db = require("./../pool");
 
 const findUserByEmail = async (email) => {
   try {
@@ -126,17 +126,34 @@ const getUserCertifications = async (id_persona) => {
   try {
     const result = await db.query(
       `
-      SELECT c.ID_Certificacion, c.Nombre, c.Institucion, c.Validez, c.Nivel
+      SELECT c.ID_Certificacion, c.Nombre, c.Institucion, c.Validez, c.Nivel, pc.fecha_obtencion, pc.fecha_vencimiento, pc.estado_validacion, pc.fecha_creacion
       FROM desarrollo.certificacion c
       JOIN desarrollo.persona_certificacion pc ON c.ID_Certificacion = pc.ID_Certificacion
       WHERE pc.ID_Persona = $1
       `,
       [id_persona]
     );
-    console.log("Certification query result:", result.rows);
     return result.rows || [];
   } catch (error) {
     console.error("SQL Error getting user certifications:", error);
+    throw error;
+  }
+};
+
+const getUserCourses = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, pc.fecha_inicio, pc.fecha_finalizacion, pc.calificacion, pc.certificado, pc.fecha_creacion
+      FROM desarrollo.curso c
+      JOIN desarrollo.persona_curso pc ON c.id_curso = pc.id_curso
+      WHERE pc.id_persona = $1
+      `,
+      [id_persona]
+    );
+    return result.rows || [];
+  } catch (error) {
+    console.error("Error getting user courses:", error);
     throw error;
   }
 };
@@ -176,5 +193,6 @@ module.exports = {
   getUserProfile,
   editUserProfile,
   getUserCertifications,
+  getUserCourses,
   getUserProfessionalHistory,
 };

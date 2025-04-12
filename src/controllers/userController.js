@@ -1,6 +1,4 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const userQueries = require("../db/queries");
+const userQueries = require("../db/queries/userQueries");
 const auth = require("../middleware/auth");
 
 const login = async (req, res) => {
@@ -180,7 +178,6 @@ const updateUserProfile = async (req, res) => {
 
 const getUserCertifications = async (req, res) => {
   try {
-    console.log("Usuario autenticado:", req.user);
     const userId = req.user.id_persona;
 
     if (!userId) {
@@ -198,6 +195,10 @@ const getUserCertifications = async (req, res) => {
       Institucion: cert.institucion,
       Validez: cert.validez,
       Nivel: cert.nivel,
+      fecha_obtencion: cert.fecha_obtencion,
+      fecha_vencimiento: cert.fecha_vencimiento,
+      estado_validacion: cert.estado_validacion,
+      fecha_creacion: cert.fecha_creacion,
     }));
 
     return res.status(200).json({
@@ -214,34 +215,56 @@ const getUserCertifications = async (req, res) => {
   }
 };
 
-const getUserProfessionalHistory = async (req, res) => {
+const getUserCourses = async (req, res) => {
   try {
     const userId = req.user.id_persona;
 
-    console.log("Request received for professional history. User ID:", userId);
-
     if (!userId) {
-      console.log("User ID missing in request");
       return res.status(400).json({
         success: false,
         message: "User ID missing",
       });
     }
 
-    console.log("Calling database query with user ID:", userId);
+    const courses = await userQueries.getUserCourses(userId);
+
+    if (!courses || courses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No se encontraron cursos para este usuario",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      courses: courses,
+    });
+  } catch (error) {
+    console.error("Get user courses error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener cursos",
+      error: error.message,
+    });
+  }
+};
+
+const getUserProfessionalHistory = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID missing",
+      });
+    }
+
     const professionalHistoryResults =
       await userQueries.getUserProfessionalHistory(userId);
-
-    console.log(
-      "Database query results:",
-      JSON.stringify(professionalHistoryResults, null, 2)
-    );
 
     if (
       !professionalHistoryResults ||
       professionalHistoryResults.length === 0
     ) {
-      console.log("No professional history found for user");
       return res.status(404).json({
         success: false,
         message: "Professional history not found for this user",
@@ -255,11 +278,6 @@ const getUserProfessionalHistory = async (req, res) => {
       role: entry.role,
       achievements: entry.achievements,
     }));
-
-    console.log(
-      "Formatted history being sent to frontend:",
-      JSON.stringify(formattedHistory, null, 2)
-    );
 
     return res.status(200).json({
       success: true,
@@ -280,5 +298,6 @@ module.exports = {
   getUserProfile,
   updateUserProfile,
   getUserCertifications,
+  getUserCourses,
   getUserProfessionalHistory,
 };
