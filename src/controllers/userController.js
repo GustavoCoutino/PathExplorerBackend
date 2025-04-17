@@ -176,6 +176,48 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
+const editUserPassword = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Nueva contraseña es requerida",
+      });
+    }
+
+    const existingUser = await userQueries.findUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    const updatedUser = await userQueries.editUserPassword(userId, newPassword);
+
+    if (!updatedUser) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al actualizar la contraseña",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Contraseña actualizada con éxito",
+    });
+  } catch (error) {
+    console.error("Update user password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar la contraseña",
+    });
+  }
+};
+
 const getUserCertifications = async (req, res) => {
   try {
     const userId = req.user.id_persona;
@@ -297,6 +339,7 @@ module.exports = {
   login,
   getUserProfile,
   updateUserProfile,
+  editUserPassword,
   getUserCertifications,
   getUserCourses,
   getUserProfessionalHistory,

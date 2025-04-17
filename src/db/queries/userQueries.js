@@ -122,6 +122,25 @@ const editUserProfile = async (id_persona, profileData) => {
   }
 };
 
+const editUserPassword = async (id_persona, newPassword) => {
+  try {
+    const result = await db.query(
+      `
+      UPDATE personas.persona 
+      SET password_hash = $1
+      WHERE id_persona = $2
+      RETURNING id_persona
+    `,
+      [newPassword, id_persona]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating user password:", error);
+    throw error;
+  }
+};
+
 const getUserCertifications = async (id_persona) => {
   try {
     const result = await db.query(
@@ -192,6 +211,7 @@ module.exports = {
   determineUserType,
   getUserProfile,
   editUserProfile,
+  editUserPassword,
   getUserCertifications,
   getUserCourses,
   getUserProfessionalHistory,
