@@ -59,12 +59,12 @@ const addUserCourse = async (req, res) => {
 const addUserCertification = async (req, res) => {
   try {
     const {
-      id_persona,
       id_certificacion,
       fecha_obtencion,
       fecha_vencimiento,
       estado_validacion,
     } = req.body;
+    const { id_persona } = req.user;
 
     const fecha_creacion = new Date();
 
