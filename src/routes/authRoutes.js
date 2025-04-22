@@ -22,5 +22,11 @@ router.get(
   auth.authenticateJWT,
   userController.getUserProfessionalHistory
 );
+router.get("/skills", auth.authenticateJWT, userController.getUserSkills);
+router.get(
+  "/trajectory-and-goals",
+  auth.authenticateJWT,
+  userController.getUserGoalsAndTrajectory
+);
 
 module.exports = router;
