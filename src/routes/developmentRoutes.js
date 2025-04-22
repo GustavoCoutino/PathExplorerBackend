@@ -31,4 +31,10 @@ router.post(
   developmentController.addUserCertification
 );
 
+router.patch(
+  "/edit-course",
+  auth.authenticateJWT,
+  developmentController.editUserCourse
+);
+
 module.exports = router;

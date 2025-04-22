@@ -114,10 +114,46 @@ const getUserCourseByIds = async (id_persona, id_curso) => {
   }
 };
 
+const editUserCourse = async (id_persona, courseData) => {
+  try {
+    const {
+      id_curso,
+      fecha_inicio,
+      fecha_finalizacion,
+      calificacion,
+      certificado,
+      progreso,
+    } = courseData;
+
+    const result = await db.query(
+      `
+      UPDATE desarrollo.persona_curso
+      SET fecha_inicio = $1, fecha_finalizacion = $2, calificacion = $3, certificado = $4, progreso = $5
+      WHERE id_persona = $6 AND id_curso = $7 AND fecha_inicio = $8 RETURNING *;  
+    `,
+      [
+        fecha_inicio,
+        fecha_finalizacion,
+        calificacion,
+        certificado,
+        progreso,
+        id_persona,
+        id_curso,
+        fecha_inicio,
+      ]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating user course:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAllCourses,
   getAllCertifications,
   addUserCourse,
   addUserCertification,
   getUserCourseByIds,
+  editUserCourse,
 };

@@ -28,6 +28,7 @@ const addUserCourse = async (req, res) => {
       fecha_finalizacion,
       calificacion,
       certificado,
+      progreso,
     } = req.body;
 
     const fecha_creacion = new Date();
@@ -47,7 +48,8 @@ const addUserCourse = async (req, res) => {
       fecha_finalizacion,
       calificacion,
       certificado,
-      fecha_creacion
+      fecha_creacion,
+      progreso
     );
 
     res.status(201).json(newCourse);
@@ -83,9 +85,58 @@ const addUserCertification = async (req, res) => {
   }
 };
 
+const editUserCourse = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+    const {
+      id_curso,
+      fecha_inicio,
+      fecha_finalizacion,
+      calificacion,
+      certificado,
+      progreso,
+    } = req.body;
+
+    if (!id_curso || !fecha_inicio || !calificacion) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de curso, fecha de inicio y calificación son requeridos",
+      });
+    }
+
+    const updatedCourse = await developmentQueries.editUserCourse(userId, {
+      id_curso,
+      fecha_inicio,
+      fecha_finalizacion,
+      calificacion,
+      certificado,
+      progreso,
+    });
+
+    if (!updatedCourse) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al actualizar el curso",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Curso actualizado con éxito",
+    });
+  } catch (error) {
+    console.error("Update user course error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar el curso",
+    });
+  }
+};
+
 module.exports = {
   getAllCourses,
   getAllCertifications,
   addUserCourse,
   addUserCertification,
+  editUserCourse,
 };
