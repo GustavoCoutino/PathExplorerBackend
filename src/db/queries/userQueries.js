@@ -163,7 +163,7 @@ const getUserCourses = async (id_persona) => {
   try {
     const result = await db.query(
       `
-      SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, pc.fecha_inicio, pc.fecha_finalizacion, pc.calificacion, pc.certificado, pc.fecha_creacion, pc.progreso
+      SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, c.categoria, pc.fecha_inicio, pc.fecha_finalizacion, pc.calificacion, pc.certificado, pc.fecha_creacion, pc.progreso
       FROM desarrollo.curso c
       JOIN desarrollo.persona_curso pc ON c.id_curso = pc.id_curso
       WHERE pc.id_persona = $1
