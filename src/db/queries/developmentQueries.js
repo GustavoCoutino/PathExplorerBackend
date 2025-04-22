@@ -4,7 +4,7 @@ const getAllCourses = async () => {
   try {
     const result = await db.query(
       `
-        SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad FROM desarrollo.curso c;
+        SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, c.categoria FROM desarrollo.curso c;
     `
     );
     return result.rows;
@@ -36,13 +36,17 @@ const addUserCourse = async (
   fecha_finalizacion,
   calificacion,
   certificado,
-  fecha_creacion
+  fecha_creacion,
+  progreso
 ) => {
   try {
+    if (fecha_finalizacion === "") {
+      fecha_finalizacion = null;
+    }
     const result = await db.query(
       `
-                      INSERT INTO desarrollo.persona_curso (id_persona, id_curso, fecha_inicio, fecha_finalizacion, calificacion, certificado, fecha_creacion)
-                      VALUES ($1, $2, $3, $4, $5, $6, $7)
+                      INSERT INTO desarrollo.persona_curso (id_persona, id_curso, fecha_inicio, fecha_finalizacion, calificacion, certificado, fecha_creacion, progreso)
+                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                       RETURNING *;
                   `,
       [
@@ -53,6 +57,7 @@ const addUserCourse = async (
         calificacion,
         certificado,
         fecha_creacion,
+        progreso,
       ]
     );
     return result.rows[0];
@@ -109,10 +114,46 @@ const getUserCourseByIds = async (id_persona, id_curso) => {
   }
 };
 
+const editUserCourse = async (id_persona, courseData) => {
+  try {
+    const {
+      id_curso,
+      fecha_inicio,
+      fecha_finalizacion,
+      calificacion,
+      certificado,
+      progreso,
+    } = courseData;
+
+    const result = await db.query(
+      `
+      UPDATE desarrollo.persona_curso
+      SET fecha_inicio = $1, fecha_finalizacion = $2, calificacion = $3, certificado = $4, progreso = $5
+      WHERE id_persona = $6 AND id_curso = $7 AND fecha_inicio = $8 RETURNING *;  
+    `,
+      [
+        fecha_inicio,
+        fecha_finalizacion,
+        calificacion,
+        certificado,
+        progreso,
+        id_persona,
+        id_curso,
+        fecha_inicio,
+      ]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating user course:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAllCourses,
   getAllCertifications,
   addUserCourse,
   addUserCertification,
   getUserCourseByIds,
+  editUserCourse,
 };
