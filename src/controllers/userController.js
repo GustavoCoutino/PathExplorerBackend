@@ -220,7 +220,10 @@ const editUserPassword = async (req, res) => {
 
 const getUserCertifications = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
@@ -259,7 +262,10 @@ const getUserCertifications = async (req, res) => {
 
 const getUserCourses = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
@@ -285,7 +291,10 @@ const getUserCourses = async (req, res) => {
 
 const getUserProfessionalHistory = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -319,7 +328,10 @@ const getUserProfessionalHistory = async (req, res) => {
 
 const getUserSkills = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
@@ -345,7 +357,10 @@ const getUserSkills = async (req, res) => {
 
 const getUserGoalsAndTrajectory = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
