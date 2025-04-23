@@ -8,4 +8,11 @@ router.post(
   auth.authenticateJWT,
   projectController.getUserProjectAndRole
 );
+
+router.get(
+  "/manager-projects-with-roles",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.getManagerProjectsWithRoles
+);
 module.exports = router;

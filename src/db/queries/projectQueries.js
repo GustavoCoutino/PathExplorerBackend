@@ -54,8 +54,63 @@ const getUserSkillsInRole = async (id_rol) => {
   }
 };
 
+const getManagerProjects = async (id_manager) => {
+  try {
+    const result = await db.query(
+      `
+        SELECT p.* FROM recursos.proyecto p
+        WHERE p.id_manager = $1;
+      `,
+      [id_manager]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching manager projects:", error);
+    throw error;
+  }
+};
+
+const getProjectRoles = async (id_proyecto) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT r.id_rol, r.titulo, r.descripcion, r.nivel_experiencia_requerido
+      FROM recursos.rol r
+      WHERE r.id_proyecto = $1
+      `,
+      [id_proyecto]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching project roles:", error);
+    throw error;
+  }
+};
+
+const getRoleAssignments = async (id_rol) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT ae.id_empleado,
+             p.nombre, p.apellido, p.email
+      FROM recursos.asignacion_empleado ae
+      JOIN personas.persona p ON ae.id_empleado = p.id_persona
+      WHERE ae.id_rol = $1
+      `,
+      [id_rol]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching role assignments:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserRoleInProject,
   getUserProject,
   getUserSkillsInRole,
+  getManagerProjects,
+  getProjectRoles,
+  getRoleAssignments,
 };
