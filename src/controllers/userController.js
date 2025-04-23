@@ -176,9 +176,54 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-const getUserCertifications = async (req, res) => {
+const editUserPassword = async (req, res) => {
   try {
     const userId = req.user.id_persona;
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Nueva contraseña es requerida",
+      });
+    }
+
+    const existingUser = await userQueries.findUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
+    const updatedUser = await userQueries.editUserPassword(userId, newPassword);
+
+    if (!updatedUser) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al actualizar la contraseña",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Contraseña actualizada con éxito",
+    });
+  } catch (error) {
+    console.error("Update user password error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar la contraseña",
+    });
+  }
+};
+
+const getUserCertifications = async (req, res) => {
+  try {
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
@@ -217,7 +262,10 @@ const getUserCertifications = async (req, res) => {
 
 const getUserCourses = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
 
     if (!userId) {
       return res.status(400).json({
@@ -227,13 +275,6 @@ const getUserCourses = async (req, res) => {
     }
 
     const courses = await userQueries.getUserCourses(userId);
-
-    if (!courses || courses.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No se encontraron cursos para este usuario",
-      });
-    }
     return res.status(200).json({
       success: true,
       courses: courses,
@@ -250,7 +291,10 @@ const getUserCourses = async (req, res) => {
 
 const getUserProfessionalHistory = async (req, res) => {
   try {
-    const userId = req.user.id_persona;
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -260,17 +304,6 @@ const getUserProfessionalHistory = async (req, res) => {
 
     const professionalHistoryResults =
       await userQueries.getUserProfessionalHistory(userId);
-
-    if (
-      !professionalHistoryResults ||
-      professionalHistoryResults.length === 0
-    ) {
-      return res.status(404).json({
-        success: false,
-        message: "Professional history not found for this user",
-      });
-    }
-
     const formattedHistory = professionalHistoryResults.map((entry) => ({
       nombre: entry.nombre,
       apellido: entry.apellido,
@@ -293,11 +326,76 @@ const getUserProfessionalHistory = async (req, res) => {
   }
 };
 
+const getUserSkills = async (req, res) => {
+  try {
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID missing",
+      });
+    }
+
+    const skills = await userQueries.getUserSkills(userId);
+    return res.status(200).json({
+      success: true,
+      skills: skills,
+    });
+  } catch (error) {
+    console.error("Get user skills error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener habilidades",
+      error: error.message,
+    });
+  }
+};
+
+const getUserGoalsAndTrajectory = async (req, res) => {
+  try {
+    const userId =
+      req.user.role === "administrador" && req.query.id_persona
+        ? req.query.id_persona
+        : req.user.id_persona;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID missing",
+      });
+    }
+
+    const trajectory = await userQueries.getUserTrajectory(userId);
+    const professionalGoals = await userQueries.getUserProfessionalGoals(
+      userId
+    );
+    return res.status(200).json({
+      success: true,
+      trajectory: trajectory,
+      professionalGoals: professionalGoals,
+    });
+  } catch (error) {
+    console.error("Get user goals and trajectory error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener metas y trayectoria",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   login,
   getUserProfile,
   updateUserProfile,
+  editUserPassword,
   getUserCertifications,
   getUserCourses,
   getUserProfessionalHistory,
+  getUserSkills,
+  getUserGoalsAndTrajectory,
 };

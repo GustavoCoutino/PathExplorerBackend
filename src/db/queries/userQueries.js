@@ -122,6 +122,25 @@ const editUserProfile = async (id_persona, profileData) => {
   }
 };
 
+const editUserPassword = async (id_persona, newPassword) => {
+  try {
+    const result = await db.query(
+      `
+      UPDATE personas.persona 
+      SET password_hash = $1
+      WHERE id_persona = $2
+      RETURNING id_persona
+    `,
+      [newPassword, id_persona]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error updating user password:", error);
+    throw error;
+  }
+};
+
 const getUserCertifications = async (id_persona) => {
   try {
     const result = await db.query(
@@ -144,7 +163,7 @@ const getUserCourses = async (id_persona) => {
   try {
     const result = await db.query(
       `
-      SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, pc.fecha_inicio, pc.fecha_finalizacion, pc.calificacion, pc.certificado, pc.fecha_creacion
+      SELECT c.id_curso, c.nombre, c.Institucion, c.descripcion, c.duracion, c.modalidad, c.categoria, pc.fecha_inicio, pc.fecha_finalizacion, pc.calificacion, pc.certificado, pc.fecha_creacion, pc.progreso
       FROM desarrollo.curso c
       JOIN desarrollo.persona_curso pc ON c.id_curso = pc.id_curso
       WHERE pc.id_persona = $1
@@ -173,7 +192,7 @@ const getUserProfessionalHistory = async (id_persona) => {
       JOIN 
           personas.PERFIL pf ON p.ID_Persona = pf.ID_Perfil
       LEFT JOIN
-          desarrollo.META_PROFESIONAL m ON p.ID_Persona = m.ID_Meta
+          desarrollo.META_PROFESIONAL m ON p.ID_Persona = m.id_meta
       WHERE
           p.ID_Persona = $1
       `,
@@ -186,13 +205,83 @@ const getUserProfessionalHistory = async (id_persona) => {
   }
 };
 
+const getUserSkills = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT 
+          ps.*, h.*
+      FROM 
+          personas.persona_habilidad ps
+      JOIN 
+          recursos.habilidad h ON h.id_habilidad = ps.id_habilidad
+      WHERE 
+          ps.id_persona = $1
+      `,
+      [id_persona]
+    );
+    return result.rows || [];
+  } catch (error) {
+    console.error("Error getting user skills:", error);
+    throw error;
+  }
+};
+
+const getUserTrajectory = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT 
+          pt.*, tc.*
+      FROM 
+          desarrollo.persona_trayectoria pt
+      JOIN 
+          personas.PERFIL pf ON pt.ID_Persona = pf.ID_Perfil
+      LEFT JOIN
+          desarrollo.trayectoria_carrera tc ON pt.id_trayectoria = tc.id_trayectoria
+      WHERE
+          pt.id_persona = $1
+      `,
+      [id_persona]
+    );
+    return result.rows || [];
+  } catch (error) {
+    console.error("Error getting user trajectory:", error);
+    throw error;
+  }
+};
+
+const getUserProfessionalGoals = async (id_persona) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT 
+          mp.*
+      FROM 
+          desarrollo.meta_profesional mp
+      WHERE
+          mp.id_persona = $1
+      `,
+      [id_persona]
+    );
+    return result.rows || [];
+  } catch (error) {
+    console.error("Error getting user professional goals:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   findUserByEmail,
   findUserById,
   determineUserType,
   getUserProfile,
   editUserProfile,
+  editUserPassword,
   getUserCertifications,
   getUserCourses,
   getUserProfessionalHistory,
+  getUserSkills,
+  getUserTrajectory,
+  getUserProfessionalGoals,
 };
