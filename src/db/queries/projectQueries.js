@@ -105,6 +105,26 @@ const getRoleAssignments = async (id_rol) => {
     throw error;
   }
 };
+const createProject = async (projectData) => {
+  try {
+    const result = await db.query(
+      `SELECT recursos.crear_proyecto_completo($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        projectData.nombre,
+        projectData.descripcion,
+        projectData.fecha_inicio,
+        projectData.fecha_fin_estimada,
+        projectData.prioridad,
+        projectData.id_manager,
+        JSON.stringify(projectData.roles),
+      ]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error creating project:", error);
+    throw error;
+  }
+};
 
 module.exports = {
   getUserRoleInProject,
@@ -113,4 +133,5 @@ module.exports = {
   getManagerProjects,
   getProjectRoles,
   getRoleAssignments,
+  createProject,
 };

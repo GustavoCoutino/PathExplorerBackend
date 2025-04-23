@@ -91,7 +91,44 @@ const getManagerProjectsWithRoles = async (req, res) => {
   }
 };
 
+const createProject = async (req, res) => {
+  const {
+    nombre,
+    descripcion,
+    fecha_inicio,
+    fecha_fin_estimada,
+    id_manager,
+    prioridad,
+    roles,
+  } = req.body;
+
+  try {
+    const newProject = await projectQueries.createProject({
+      nombre,
+      descripcion,
+      fecha_inicio,
+      fecha_fin_estimada,
+      prioridad,
+      id_manager,
+      roles,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Proyecto creado exitosamente",
+      project: newProject,
+    });
+  } catch (error) {
+    console.error("Error creando proyecto:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creando proyecto",
+    });
+  }
+};
+
 module.exports = {
   getUserProjectAndRole,
   getManagerProjectsWithRoles,
+  createProject,
 };

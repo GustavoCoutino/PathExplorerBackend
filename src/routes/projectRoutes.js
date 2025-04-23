@@ -15,4 +15,10 @@ router.get(
   auth.authorize("manager"),
   projectController.getManagerProjectsWithRoles
 );
+router.post(
+  "/create-project",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.createProject
+);
 module.exports = router;
