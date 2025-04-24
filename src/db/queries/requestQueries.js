@@ -4,13 +4,26 @@ const getAssignmentRequests = async (id_administrador) => {
   try {
     const result = await db.query(
       `
-            SELECT evaluacion.solicitud_asignacion.* 
-            FROM evaluacion.solicitud_asignacion
-            WHERE id_administrador = $1 
+            SELECT 
+            sa.*,
+            p.nombre AS nombre_solicitante,
+            pr.nombre AS nombre_proyecto
+        FROM 
+            evaluacion.solicitud_asignacion sa
+        JOIN 
+            personas.manager m ON sa.id_manager = m.id_manager
+        JOIN 
+            personas.persona p ON m.id_persona = p.id_persona
+        JOIN 
+            recursos.rol r ON sa.id_rol = r.id_rol
+        JOIN 
+            recursos.proyecto pr ON r.id_proyecto = pr.id_proyecto
+        WHERE 
+            sa.id_administrador = $1
         `,
       [id_administrador]
     );
-    return result.rows[0] || null;
+    return result.rows || null;
   } catch (error) {
     console.error("Error fetching assignment requests:", error);
     throw error;

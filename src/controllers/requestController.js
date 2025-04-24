@@ -1,7 +1,11 @@
 const requestQueries = require("../db/queries/requestQueries");
+const userQueries = require("../db/queries/userQueries");
 
 async function getAssignmentRequests(req, res) {
-  const id_administrador = req.body.id_administrador;
+  const { id_persona } = req.user;
+  const role = await userQueries.determineUserType(id_persona);
+  const id_administrador = role.roleData.id_administrador;
+
   try {
     const requests = await requestQueries.getAssignmentRequests(
       id_administrador
@@ -14,7 +18,7 @@ async function getAssignmentRequests(req, res) {
     }
     res.status(200).json({
       hasRequests: true,
-      requests,
+      requests: requests,
     });
   } catch (error) {
     console.error("Error obteniendo solicitudes de asignación:", error);
@@ -69,7 +73,7 @@ async function updateAssignmentRequest(req, res) {
   const { id_solicitud, estado, comentarios_resolucion } = req.body;
 
   try {
-    const updatedRequest = await requestQueries.endAssignmentRequest(
+    await requestQueries.endAssignmentRequest(
       id_solicitud,
       estado,
       comentarios_resolucion
