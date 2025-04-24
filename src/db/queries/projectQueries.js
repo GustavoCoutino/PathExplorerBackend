@@ -126,6 +126,25 @@ const createProject = async (projectData) => {
   }
 };
 
+const getBestCandidatesForRole = async (id_rol) => {
+  try {
+    const result = await db.query(
+      `
+      SELECT id_empleado, nombre_completo, puesto_actual, porcentaje_disponibilidad, porcentaje_match
+      FROM recursos.vw_candidatos_para_roles
+      WHERE id_rol = $1
+      ORDER BY porcentaje_match DESC, porcentaje_disponibilidad DESC  
+      LIMIT 5;
+      `,
+      [id_rol]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching best candidates for role:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserRoleInProject,
   getUserProject,
@@ -134,4 +153,5 @@ module.exports = {
   getProjectRoles,
   getRoleAssignments,
   createProject,
+  getBestCandidatesForRole,
 };

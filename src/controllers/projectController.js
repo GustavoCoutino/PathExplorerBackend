@@ -127,8 +127,26 @@ const createProject = async (req, res) => {
   }
 };
 
+const getBestCandidatesForRole = async (req, res) => {
+  try {
+    const id_rol = req.body.id_rol;
+    const candidates = await projectQueries.getBestCandidatesForRole(id_rol);
+    res.status(200).json({
+      success: true,
+      candidates,
+    });
+  } catch (error) {
+    console.error("Error fetching best candidates for role:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching best candidates for role",
+    });
+  }
+};
+
 module.exports = {
   getUserProjectAndRole,
   getManagerProjectsWithRoles,
   createProject,
+  getBestCandidatesForRole,
 };

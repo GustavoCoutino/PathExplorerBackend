@@ -21,4 +21,10 @@ router.post(
   auth.authorize("manager"),
   projectController.createProject
 );
+router.post(
+  "/best-candidates-for-role",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.getBestCandidatesForRole
+);
 module.exports = router;
