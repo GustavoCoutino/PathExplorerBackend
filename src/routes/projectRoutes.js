@@ -8,4 +8,37 @@ router.post(
   auth.authenticateJWT,
   projectController.getUserProjectAndRole
 );
+
+router.get(
+  "/manager-projects-with-roles",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.getManagerProjectsWithRoles
+);
+router.post(
+  "/create-project",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.createProject
+);
+router.post(
+  "/best-candidates-for-role",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.getBestCandidatesForRole
+);
+router.patch(
+  "/edit-project",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.editProject
+);
+router.post(
+  "/add-roles-to-project",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.addRoleToProject
+);
+router.get("/all-skills", auth.authenticateJWT, projectController.getAllSkills);
+
 module.exports = router;
