@@ -145,6 +145,86 @@ const getBestCandidatesForRole = async (id_rol) => {
   }
 };
 
+const editProject = async (projectData) => {
+  try {
+    const result = await db.query(
+      `UPDATE recursos.proyecto SET nombre = $1, descripcion = $2, fecha_inicio = $3, fecha_fin_estimada = $4, prioridad = $5 WHERE id_proyecto = $6 RETURNING *;`,
+      [
+        projectData.nombre,
+        projectData.descripcion,
+        projectData.fecha_inicio,
+        projectData.fecha_fin_estimada,
+        projectData.prioridad,
+        projectData.id_proyecto,
+      ]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error editing project:", error);
+    throw error;
+  }
+};
+
+const addRoleToProject = async (
+  titulo,
+  descripcion,
+  nivel_experiencia_requerido,
+  estado,
+  id_proyecto,
+  id_manager,
+  id_habilidad,
+  nivel_minimo_requerido,
+  importancia
+) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `INSERT INTO recursos.rol (titulo, descripcion, nivel_experiencia_requerido, estado, id_proyecto, id_manager) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;`,
+      [
+        titulo,
+        descripcion,
+        nivel_experiencia_requerido,
+        estado,
+        id_proyecto,
+        id_manager,
+      ]
+    );
+
+    await client.query(
+      `INSERT INTO recursos.rol_habilidad (id_rol, id_habilidad, nivel_minimo_requerido, importancia) VALUES ($1, $2, $3, $4);`,
+      [result.rows[0].id_rol, id_habilidad, nivel_minimo_requerido, importancia]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error adding role to project:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const getAllSkills = async () => {
+  try {
+    const result = await db.query(
+      `
+        SELECT recursos.habilidad.*
+        FROM recursos.habilidad;
+      `
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching all skills:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserRoleInProject,
   getUserProject,
@@ -154,4 +234,7 @@ module.exports = {
   getRoleAssignments,
   createProject,
   getBestCandidatesForRole,
+  addRoleToProject,
+  editProject,
+  getAllSkills,
 };

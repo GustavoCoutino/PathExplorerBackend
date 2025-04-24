@@ -144,9 +144,109 @@ const getBestCandidatesForRole = async (req, res) => {
   }
 };
 
+const editProject = async (req, res) => {
+  const {
+    id_proyecto,
+    nombre,
+    descripcion,
+    fecha_inicio,
+    fecha_fin_estimada,
+    prioridad,
+  } = req.body;
+
+  try {
+    const updatedProject = await projectQueries.editProject({
+      id_proyecto,
+      nombre,
+      descripcion,
+      fecha_inicio,
+      fecha_fin_estimada,
+      prioridad,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Proyecto editado exitosamente",
+      project: updatedProject,
+    });
+  } catch (error) {
+    console.error("Error editando proyecto:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error editando proyecto",
+    });
+  }
+};
+
+const addRoleToProject = async (req, res) => {
+  try {
+    const {
+      titulo,
+      descripcion,
+      nivel_experiencia_requerido,
+      estado,
+      id_proyecto,
+      id_manager,
+      id_habilidad,
+      nivel_minimo_requerido,
+      importancia,
+    } = req.body;
+
+    const result = await projectQueries.addRoleToProject(
+      titulo,
+      descripcion,
+      nivel_experiencia_requerido,
+      estado,
+      id_proyecto,
+      id_manager,
+      id_habilidad,
+      nivel_minimo_requerido,
+      importancia
+    );
+
+    if (result) {
+      res.status(201).json({
+        success: true,
+        message: "Rol agregado al proyecto exitosamente",
+        role: result,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Error al agregar rol al proyecto",
+      });
+    }
+  } catch (error) {
+    console.error("Error adding role to project:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error adding role to project",
+    });
+  }
+};
+
+const getAllSkills = async (req, res) => {
+  try {
+    const skills = await projectQueries.getAllSkills();
+    res.status(200).json({
+      success: true,
+      skills,
+    });
+  } catch (error) {
+    console.error("Error fetching skills:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching skills",
+    });
+  }
+};
+
 module.exports = {
   getUserProjectAndRole,
   getManagerProjectsWithRoles,
   createProject,
   getBestCandidatesForRole,
+  addRoleToProject,
+  editProject,
+  getAllSkills,
 };
