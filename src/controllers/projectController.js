@@ -145,6 +145,8 @@ const getBestCandidatesForRole = async (req, res) => {
 };
 
 const editProject = async (req, res) => {
+  console.log("Full request body:", req.body);
+  
   const {
     id_proyecto,
     nombre,
@@ -153,7 +155,16 @@ const editProject = async (req, res) => {
     fecha_fin_estimada,
     prioridad,
   } = req.body;
-
+  
+  console.log("Destructured values:", {
+    id_proyecto,
+    nombre,
+    descripcion,
+    fecha_inicio,
+    fecha_fin_estimada,
+    prioridad,
+  });
+  
   try {
     const updatedProject = await projectQueries.editProject({
       id_proyecto,
@@ -163,7 +174,9 @@ const editProject = async (req, res) => {
       fecha_fin_estimada,
       prioridad,
     });
-
+    
+    console.log("Query result:", updatedProject);
+    
     res.status(200).json({
       success: true,
       message: "Proyecto editado exitosamente",
