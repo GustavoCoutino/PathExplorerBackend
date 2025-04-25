@@ -10,6 +10,8 @@ const projectRoutes = require("./routes/projectRoutes");
 const bancaRoutes = require("./routes/bancaRoutes");
 const developmentRoutes = require("./routes/developmentRoutes");
 const requestRoutes = require("./routes/requestRoutes");
+const notificationsRoutes = require("./routes/notificationsRoutes");
+const { scheduleCertificationNotifications } = require("./certifications");
 
 dotenv.config();
 
@@ -32,7 +34,14 @@ app.use("/api/projects", auth.authenticateJWT, projectRoutes);
 app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use("/api/development", auth.authenticateJWT, developmentRoutes);
 app.use("/api/requests", auth.authenticateJWT, requestRoutes);
+app.use("/api/notifications", auth.authenticateJWT, notificationsRoutes);
 app.use(error);
+
+const initializeScheduledJobs = () => {
+  scheduleCertificationNotifications();
+};
+
+initializeScheduledJobs();
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
