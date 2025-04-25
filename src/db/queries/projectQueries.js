@@ -119,6 +119,7 @@ const createProject = async (projectData) => {
         JSON.stringify(projectData.roles),
       ]
     );
+
     return result.rows;
   } catch (error) {
     console.error("Error creating project:", error);
