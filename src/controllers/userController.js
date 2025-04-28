@@ -14,6 +14,7 @@ const login = async (req, res) => {
     const user = await userQueries.findUserByEmail(email);
 
     if (!user) {
+      console.log("User not found");
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
@@ -21,6 +22,7 @@ const login = async (req, res) => {
     }
 
     if (!user.password_hash) {
+      console.log("User password not set");
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
@@ -179,7 +181,7 @@ const updateUserProfile = async (req, res) => {
 const editUserPassword = async (req, res) => {
   try {
     const userId = req.user.id_persona;
-    const { newPassword } = req.body;
+    const { oldPassword, newPassword } = req.body;
 
     if (!newPassword) {
       return res.status(400).json({
@@ -190,9 +192,16 @@ const editUserPassword = async (req, res) => {
 
     const existingUser = await userQueries.findUserById(userId);
     if (!existingUser) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
         message: "Usuario no encontrado",
+      });
+    }
+
+    if (existingUser.password_hash !== oldPassword) {
+      return res.status(500).json({
+        success: false,
+        message: "Contraseña actual incorrecta",
       });
     }
 

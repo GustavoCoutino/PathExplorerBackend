@@ -3,7 +3,7 @@ const router = express.Router();
 const requestController = require("../controllers/requestController");
 const auth = require("../middleware/auth");
 
-router.post(
+router.get(
   "/assignment-requests",
   auth.authenticateJWT,
   auth.authorize("administrador"),
