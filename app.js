@@ -3,15 +3,15 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
-const auth = require("./middleware/auth");
-const error = require("./middleware/error");
-const authRoutes = require("./routes/authRoutes");
-const projectRoutes = require("./routes/projectRoutes");
-const bancaRoutes = require("./routes/bancaRoutes");
-const developmentRoutes = require("./routes/developmentRoutes");
-const requestRoutes = require("./routes/requestRoutes");
-const notificationsRoutes = require("./routes/notificationsRoutes");
-const { scheduleCertificationNotifications } = require("./certifications");
+const auth = require("./src/middleware/auth");
+const error = require("./src/middleware/error");
+const authRoutes = require("./src/routes/authRoutes");
+const projectRoutes = require("./src/routes/projectRoutes");
+const bancaRoutes = require("./src/routes/bancaRoutes");
+const developmentRoutes = require("./src/routes/developmentRoutes");
+const requestRoutes = require("./src/routes/requestRoutes");
+const notificationsRoutes = require("./src/routes/notificationsRoutes");
+const { scheduleCertificationNotifications } = require("./src/certifications");
 
 dotenv.config();
 
