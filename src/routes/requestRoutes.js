@@ -21,4 +21,11 @@ router.patch(
   auth.authorize("administrador"),
   requestController.updateAssignmentRequest
 );
+
+router.get(
+  "/administrators",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  requestController.getAllAdministratorsForRequest
+);
 module.exports = router;

@@ -108,8 +108,28 @@ const endAssignmentRequest = async (
   }
 };
 
+const getAllAdministrators = async () => {
+  try {
+    const result = await db.query(
+      `
+            SELECT 
+                personas.administrador.*, CONCAT(personas.persona.nombre, ' ', personas.persona.apellido) AS nombre_completo
+            FROM 
+                personas.administrador
+            JOIN 
+                personas.persona ON personas.administrador.id_persona = personas.persona.id_persona;
+        `
+    );
+    return result.rows || null;
+  } catch (error) {
+    console.error("Error fetching administrators:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   endAssignmentRequest,
+  getAllAdministrators,
 };

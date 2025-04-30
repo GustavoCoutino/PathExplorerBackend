@@ -30,7 +30,6 @@ async function getAssignmentRequests(req, res) {
 
 async function createAssignmentRequest(req, res) {
   const {
-    id_manager,
     id_administrador,
     id_empleado,
     id_rol,
@@ -43,6 +42,9 @@ async function createAssignmentRequest(req, res) {
     fecha_creacion,
     fecha_actualizacion,
   } = req.body;
+  const { id_persona } = req.user;
+  const role = await userQueries.determineUserType(id_persona);
+  const id_manager = role.roleData.id_manager;
 
   try {
     const newRequest = await requestQueries.createAssignmentRequest(
@@ -89,8 +91,28 @@ async function updateAssignmentRequest(req, res) {
   }
 }
 
+async function getAllAdministratorsForRequest(req, res) {
+  try {
+    const administrators = await requestQueries.getAllAdministrators();
+    if (administrators.length === 0) {
+      return res.status(200).json({
+        hasRequests: false,
+        message: "No hay administradores disponibles",
+      });
+    }
+    res.status(200).json({
+      hasRequests: true,
+      administrators: administrators,
+    });
+  } catch (error) {
+    console.error("Error obteniendo administradores:", error);
+    res.status(500).json({ message: "Error obteniendo administradores" });
+  }
+}
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   updateAssignmentRequest,
+  getAllAdministratorsForRequest,
 };
