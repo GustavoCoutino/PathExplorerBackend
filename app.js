@@ -20,16 +20,7 @@ const port = process.env.PORT || 4000;
 
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://path-explorer-front-end-rogj.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors());
 
 app.use(morgan("dev"));
 
