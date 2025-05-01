@@ -32,6 +32,12 @@ router.post(
 );
 
 router.patch(
+  "/edit-certification",
+  auth.authenticateJWT,
+  developmentController.editUserCertification
+);
+
+router.patch(
   "/edit-course",
   auth.authenticateJWT,
   developmentController.editUserCourse

@@ -133,10 +133,54 @@ const editUserCourse = async (req, res) => {
   }
 };
 
+const editUserCertification = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+    const {
+      id_certificacion,
+      fecha_obtencion,
+      fecha_vencimiento,
+      estado_validacion,
+      fecha_creacion,
+    } = req.body;
+
+    const updateCertification = await developmentQueries.editUserCertification(
+      userId,
+      {
+        id_certificacion,
+        fecha_obtencion,
+        fecha_vencimiento,
+        estado_validacion,
+        fecha_creacion,
+      }
+    );
+
+    if (!updateCertification) {
+      console.error("No se encontró la certificación para actualizar");
+      return res.status(500).json({
+        success: false,
+        message: "Error al actualizar la certificación",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Certificación actualizada con éxito",
+    });
+  } catch (error) {
+    console.error("Update user certification error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al actualizar el curso",
+    });
+  }
+};
+
 module.exports = {
   getAllCourses,
   getAllCertifications,
   addUserCourse,
   addUserCertification,
   editUserCourse,
+  editUserCertification,
 };
