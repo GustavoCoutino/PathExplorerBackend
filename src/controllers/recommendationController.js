@@ -5,14 +5,28 @@ const { RunnableSequence } = require("@langchain/core/runnables");
 const userQueries = require("../db/queries/userQueries");
 const developmentQueries = require("../db/queries/developmentQueries");
 
+const recommendationCache = new Map();
+
 const getRecommendations = async (req, res) => {
   try {
+    for (const [key, value] of recommendationCache.entries()) {
+      console.log(`Key: ${key}, Value: ${JSON.stringify(value)}`);
+    }
     const userId = req.user.id_persona;
-    const selectedRole = req.body;
+    const { selectedRole } = req.body;
     if (!selectedRole) {
       return res.status(400).json({
         success: false,
         message: "Se requiere especificar un rol seleccionado",
+      });
+    }
+    const cacheKey = `${userId}-${selectedRole}`;
+    if (recommendationCache.has(cacheKey)) {
+      return res.status(200).json({
+        success: true,
+        message: "Recomendaciones recuperadas de caché",
+        recommendations: recommendationCache.get(cacheKey),
+        source: "cache",
       });
     }
 
@@ -26,44 +40,75 @@ const getRecommendations = async (req, res) => {
     const allCourses = await developmentQueries.getAllCourses();
     const allCertifications = await developmentQueries.getAllCertifications();
 
+    const simplifiedUserSkills = userSkills.map((skill) => ({
+      nombre: skill.nombre,
+      nivel: skill.nivel_demostrado,
+      categoria: skill.categoria,
+    }));
+
+    const simplifiedUserCertifications = userCertifications.map((cert) => ({
+      nombre: cert.nombre,
+      institucion: cert.institucion,
+      estado_validacion: cert.estado_validacion,
+    }));
+
+    const simplifiedUserCourses = userCourses.map((course) => ({
+      nombre: course.nombre,
+      institucion: course.institucion,
+      categoria: course.categoria,
+    }));
+
+    const simplifiedHistory = professionalHistory.map((history) => ({
+      role: history.role,
+      historial_profesional: history.historial_profesional,
+      logros: history.achievements,
+    }));
+
+    const simplifiedAllCourses = allCourses.map((course) => ({
+      nombre: course.nombre,
+      institucion: course.institucion,
+      descripcion: course.descripcion,
+      categoria: course.categoria,
+    }));
+
+    const simplifiedAllCertifications = allCertifications.map((cert) => ({
+      nombre: cert.nombre,
+      institucion: cert.institucion,
+    }));
     const llm = new ChatOpenAI({
-      temperature: 0.7,
+      temperature: 0.3,
       modelName: "gpt-4",
     });
 
     const promptTemplate = PromptTemplate.fromTemplate(`
-      Como asesor de desarrollo profesional con experiencia en crecimiento profesional en TI,
-      recomienda tres trayectorias de desarrollo profesional para el rol de {selectedRole}, basado en las habilidades y experiencia del empleado.
-      
-      Habilidades del Empleado:
-      {skills}
-      
-      Certificaciones Actuales y Pasadas:
-      {certifications}
-      
-      Cursos Completados:
-      {courses}
-      
-      Historial Profesional:
-      {professionalHistory}
-      
-      Cursos Disponibles:
-      {availableCourses}
-      
-      Certificaciones Disponibles:
-      {availableCertifications}
-      
-      Basado en esta información, proporciona tres trayectorias de desarrollo profesional diferentes. Cada trayectoria debe incluir:
-      1. Nombre de la trayectoria
-      2. Descripción de la trayectoria
-      3. Los 3 mejores cursos que mejorarían su rol actual
-      4. Las 3 mejores certificaciones que avanzarían esta trayectoria profesional
-      5. Orden en el que deben completarse los cursos y certificaciones
-      6. Las 10 principales habilidades que deberían desarrollarse para esta trayectoria
-      7. Una breve explicación de por qué esta trayectoria es adecuada para el perfil del empleado
-      
-      Formatea tu respuesta como una estructura JSON que contenga un array llamado "trayectorias" con tres objetos, cada uno representando una trayectoria.
-    `);
+        Eres un asesor de desarrollo profesional en TI. Tu tarea es recomendar SOLAMENTE tres ESPECIALIZACIONES dentro del rol de {selectedRole}, NO roles diferentes.
+        
+        IMPORTANTE: El empleado ya es {selectedRole} y quiere diferentes ESPECIALIZACIONES dentro de ese MISMO rol, no desea cambiar a otro rol.
+        
+        Datos del empleado:
+        - Habilidades: {skills}
+        - Certificaciones: {certifications}
+        - Cursos completados: {courses}
+        - Historial: {professionalHistory}
+        - Recursos disponibles - Cursos: {availableCourses}
+        - Recursos disponibles - Certificaciones: {availableCertifications}
+        
+        RESTRICCIONES IMPORTANTES:
+        1. Cada una de las tres trayectorias DEBE ser una ESPECIALIZACIÓN o VARIANTE del rol {selectedRole}, NO un rol diferente.
+        2. Por ejemplo, si {selectedRole} es "Backend Developer", las trayectorias podrían ser "Backend Developer especializado en microservicios", "Backend Developer enfocado en bases de datos" y "Backend Developer orientado a seguridad", pero NUNCA "Data Scientist", "Scrum Master" o cualquier rol que no sea explícitamente una variante de Backend Developer.
+        3. Cada trayectoria debe incluir SIEMPRE el término "{selectedRole}" en su nombre para enfatizar que es una especialización del mismo rol, no un cambio de carrera.
+        
+        Para cada especialización, incluye:
+        1. Nombre: DEBE contener "{selectedRole}" + especialización (ej: "{selectedRole} especializado en X")
+        2. Descripción breve de esta especialización
+        3. 3 cursos recomendados relevantes para esta especialización
+        4. 3 certificaciones recomendadas para esta especialización
+        5. Orden sugerido para completar estos cursos y certificaciones
+        6. 10 habilidades clave para desarrollar en esta especialización
+        7. Justificación breve de por qué esta especialización es adecuada
+        
+        Responde en JSON donde cada trayectoria incluye campos de nombre, descripcion, mejores_cursos, mejores_certificaciones, orden_cursos_certificaciones, habilidades_desarrollar, y explicacion.
+      `);
 
     const chain = RunnableSequence.from([
       promptTemplate,
@@ -73,12 +118,12 @@ const getRecommendations = async (req, res) => {
 
     const result = await chain.invoke({
       selectedRole: selectedRole,
-      skills: JSON.stringify(userSkills),
-      certifications: JSON.stringify(userCertifications),
-      courses: JSON.stringify(userCourses),
-      professionalHistory: JSON.stringify(professionalHistory),
-      availableCourses: JSON.stringify(allCourses),
-      availableCertifications: JSON.stringify(allCertifications),
+      skills: JSON.stringify(simplifiedUserSkills),
+      certifications: JSON.stringify(simplifiedUserCertifications),
+      courses: JSON.stringify(simplifiedUserCourses),
+      professionalHistory: JSON.stringify(simplifiedHistory),
+      availableCourses: JSON.stringify(simplifiedAllCourses),
+      availableCertifications: JSON.stringify(simplifiedAllCertifications),
     });
 
     let recommendations;
@@ -92,7 +137,7 @@ const getRecommendations = async (req, res) => {
         rawResponse: result,
       });
     }
-
+    recommendationCache.set(cacheKey, recommendations);
     return res.status(200).json({
       success: true,
       message: "Recomendaciones generadas exitosamente",
