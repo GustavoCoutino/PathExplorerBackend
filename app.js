@@ -11,6 +11,7 @@ const bancaRoutes = require("./src/routes/bancaRoutes");
 const developmentRoutes = require("./src/routes/developmentRoutes");
 const requestRoutes = require("./src/routes/requestRoutes");
 const notificationsRoutes = require("./src/routes/notificationsRoutes");
+const recommendationRoutes = require("./src/routes/recommendationRoutes");
 const { scheduleCertificationNotifications } = require("./src/certifications");
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use("/api/development", auth.authenticateJWT, developmentRoutes);
 app.use("/api/requests", auth.authenticateJWT, requestRoutes);
 app.use("/api/notifications", auth.authenticateJWT, notificationsRoutes);
+app.use("/api/recommendations", auth.authenticateJWT, recommendationRoutes);
 app.use(error);
 
 const initializeScheduledJobs = () => {
