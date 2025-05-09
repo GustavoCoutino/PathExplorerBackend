@@ -9,18 +9,25 @@ const recommendationCache = new Map();
 
 const getRecommendations = async (req, res) => {
   try {
-    for (const [key, value] of recommendationCache.entries()) {
-      console.log(`Key: ${key}, Value: ${JSON.stringify(value)}`);
-    }
     const userId = req.user.id_persona;
     const { selectedRole } = req.body;
+    const {
+      selectedAbilities,
+      selectedCertifications,
+      selectedCourses,
+      trajectoryTime,
+    } = req.body;
     if (!selectedRole) {
       return res.status(400).json({
         success: false,
         message: "Se requiere especificar un rol seleccionado",
       });
     }
-    const cacheKey = `${userId}-${selectedRole}`;
+    const cacheKey = `${userId}-${selectedRole}-${JSON.stringify(
+      selectedAbilities || []
+    )}-${JSON.stringify(selectedCertifications || [])}-${JSON.stringify(
+      selectedCourses || []
+    )}-${trajectoryTime || ""}`;
     if (recommendationCache.has(cacheKey)) {
       return res.status(200).json({
         success: true,
@@ -80,18 +87,43 @@ const getRecommendations = async (req, res) => {
       modelName: "gpt-4",
     });
 
-    const promptTemplate = PromptTemplate.fromTemplate(`
-        Eres un asesor de desarrollo profesional en TI. Tu tarea es recomendar SOLAMENTE tres ESPECIALIZACIONES dentro del rol de {selectedRole}, NO roles diferentes.
+    let promptText = `
+     Eres un asesor de desarrollo profesional en TI. Tu tarea es recomendar SOLAMENTE tres ESPECIALIZACIONES dentro del rol de {selectedRole}, NO roles diferentes.
         
-        IMPORTANTE: El empleado ya es {selectedRole} y quiere diferentes ESPECIALIZACIONES dentro de ese MISMO rol, no desea cambiar a otro rol.
+      IMPORTANTE: El empleado ya es {selectedRole} y quiere diferentes ESPECIALIZACIONES dentro de ese MISMO rol, no desea cambiar a otro rol.
         
-        Datos del empleado:
+      Datos del empleado:
         - Habilidades: {skills}
         - Certificaciones: {certifications}
         - Cursos completados: {courses}
         - Historial: {professionalHistory}
         - Recursos disponibles - Cursos: {availableCourses}
-        - Recursos disponibles - Certificaciones: {availableCertifications}
+        - Recursos disponibles - Certificaciones: {availableCertifications}`;
+
+    if (selectedAbilities) {
+      promptText += `
+        - Habilidades específicas que le interesa desarrollar: {selectedAbilities}`;
+    }
+
+    if (selectedCertifications && selectedCertifications.length > 0) {
+      promptText += `
+        - Certificaciones específicas que le interesa obtener: {selectedCertifications}
+      `;
+    }
+
+    if (selectedCourses && selectedCourses.length > 0) {
+      promptText += `
+        - Cursos específicos que le interesa tomar: {selectedCourses}
+      `;
+    }
+
+    if (trajectoryTime) {
+      promptText += `
+        - Tiempo disponible para completar la trayectoria: {trajectoryTime}
+      `;
+    }
+
+    promptText += `
         
         RESTRICCIONES IMPORTANTES:
         1. Cada una de las tres trayectorias DEBE ser una ESPECIALIZACIÓN o VARIANTE del rol {selectedRole}, NO un rol diferente.
@@ -108,15 +140,11 @@ const getRecommendations = async (req, res) => {
         7. Justificación breve de por qué esta especialización es adecuada
         
         Responde en JSON donde cada trayectoria incluye campos de nombre, descripcion, mejores_cursos, mejores_certificaciones, orden_cursos_certificaciones, habilidades_desarrollar, y explicacion.
-      `);
+    `;
 
-    const chain = RunnableSequence.from([
-      promptTemplate,
-      llm,
-      new StringOutputParser(),
-    ]);
+    const promptTemplate = PromptTemplate.fromTemplate(promptText);
 
-    const result = await chain.invoke({
+    const inputParams = {
       selectedRole: selectedRole,
       skills: JSON.stringify(simplifiedUserSkills),
       certifications: JSON.stringify(simplifiedUserCertifications),
@@ -124,8 +152,33 @@ const getRecommendations = async (req, res) => {
       professionalHistory: JSON.stringify(simplifiedHistory),
       availableCourses: JSON.stringify(simplifiedAllCourses),
       availableCertifications: JSON.stringify(simplifiedAllCertifications),
-    });
+    };
 
+    if (selectedAbilities && selectedAbilities.length > 0) {
+      inputParams.selectedAbilities = JSON.stringify(selectedAbilities);
+    }
+
+    if (selectedCertifications && selectedCertifications.length > 0) {
+      inputParams.selectedCertifications = JSON.stringify(
+        selectedCertifications
+      );
+    }
+
+    if (selectedCourses && selectedCourses.length > 0) {
+      inputParams.selectedCourses = JSON.stringify(selectedCourses);
+    }
+
+    if (trajectoryTime) {
+      inputParams.trajectoryTime = trajectoryTime;
+    }
+
+    const chain = RunnableSequence.from([
+      promptTemplate,
+      llm,
+      new StringOutputParser(),
+    ]);
+
+    const result = await chain.invoke(inputParams);
     let recommendations;
     try {
       recommendations = JSON.parse(result);
