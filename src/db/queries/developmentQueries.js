@@ -124,13 +124,23 @@ const editUserCourse = async (id_persona, courseData) => {
       certificado,
       progreso,
     } = courseData;
-
+    
+    console.log("Query parameters:", {
+      id_persona,
+      id_curso,
+      fecha_inicio,
+      fecha_finalizacion,
+      calificacion,
+      certificado,
+      progreso
+    });
+    
+    // Remove the second fecha_inicio from WHERE clause
     const result = await db.query(
-      `
-      UPDATE desarrollo.persona_curso
-      SET fecha_inicio = $1, fecha_finalizacion = $2, calificacion = $3, certificado = $4, progreso = $5
-      WHERE id_persona = $6 AND id_curso = $7 AND fecha_inicio = $8 RETURNING *;  
-    `,
+      `UPDATE desarrollo.persona_curso
+       SET fecha_inicio = $1, fecha_finalizacion = $2, calificacion = $3, certificado = $4, progreso = $5
+       WHERE id_persona = $6 AND id_curso = $7
+       RETURNING *;`,
       [
         fecha_inicio,
         fecha_finalizacion,
@@ -138,13 +148,14 @@ const editUserCourse = async (id_persona, courseData) => {
         certificado,
         progreso,
         id_persona,
-        id_curso,
-        fecha_inicio,
+        id_curso
       ]
     );
+    
+    console.log("Query result:", result.rows[0]);
     return result.rows[0] || null;
   } catch (error) {
-    console.error("Error updating user course:", error);
+    console.error("Error details:", error);
     throw error;
   }
 };

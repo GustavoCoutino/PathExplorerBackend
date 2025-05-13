@@ -35,6 +35,7 @@ app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use("/api/development", auth.authenticateJWT, developmentRoutes);
 app.use("/api/requests", auth.authenticateJWT, requestRoutes);
 app.use("/api/notifications", auth.authenticateJWT, notificationsRoutes);
+
 app.use(error);
 
 const initializeScheduledJobs = () => {

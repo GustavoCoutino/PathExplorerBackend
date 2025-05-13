@@ -30,10 +30,14 @@ router.post(
   auth.authorize("empleado"),
   developmentController.addUserCertification
 );
-
+// In your developmentRoutes.js file
 router.patch(
   "/edit-certification",
   auth.authenticateJWT,
+  (req, res, next) => {
+    console.log("Edit certification route hit, body:", req.body);
+    next();
+  },
   developmentController.editUserCertification
 );
 
@@ -42,5 +46,9 @@ router.patch(
   auth.authenticateJWT,
   developmentController.editUserCourse
 );
+
+
+// Log all routes on server startup
+
 
 module.exports = router;
