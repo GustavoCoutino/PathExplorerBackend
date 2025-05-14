@@ -140,8 +140,6 @@ const editUserCourse = async (id_persona, courseData) => {
         id_curso,
       ]
     );
-
-    console.log("Query result:", result.rows[0]);
     return result.rows[0] || null;
   } catch (error) {
     console.error("Error details:", error);
