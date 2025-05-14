@@ -14,7 +14,6 @@ const login = async (req, res) => {
     const user = await userQueries.findUserByEmail(email);
 
     if (!user) {
-      console.log("User not found");
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
@@ -22,7 +21,6 @@ const login = async (req, res) => {
     }
 
     if (!user.password_hash) {
-      console.log("User password not set");
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
