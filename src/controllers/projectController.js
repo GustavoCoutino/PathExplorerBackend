@@ -12,15 +12,21 @@ const getUserProjectAndRole = async (req, res) => {
       });
     }
     const userRole = await projectQueries.getUserRoleInProject(id_empleado);
+    const id_proyecto = userProject[0].id_proyecto;
     const userSkills = await projectQueries.getUserSkillsInRole(
       userRole[0].id_rol
     );
+    const getTeamMembers = await projectQueries.getTeamMembers(id_proyecto);
+    const id_manager = userProject[0].id_manager;
+    const managerInfo = await projectQueries.getProjectManager(id_manager);
 
     res.status(200).json({
       hasProject: true,
       userProject,
       userRole,
       userSkills,
+      getTeamMembers,
+      managerInfo,
     });
   } catch (error) {
     console.error("Error obteniendo proyecto y rol:", error);
