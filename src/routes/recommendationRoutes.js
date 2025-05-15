@@ -9,4 +9,16 @@ router.get(
   recommendationController.getRecommendations
 );
 
+router.post(
+  "/development-recommendations",
+  auth.authenticateJWT,
+  recommendationController.createEmployeeTrayectory
+);
+
+router.get(
+  "/get-user-trayectorias",
+  auth.authenticateJWT,
+  recommendationController.getUserTrayectoria
+);
+
 module.exports = router;
