@@ -16,7 +16,7 @@ router.post(
 );
 
 router.get(
-  "/get-user-trayectorias",
+  "/get-user-trajectoria",
   auth.authenticateJWT,
   recommendationController.getUserTrayectoria
 );
