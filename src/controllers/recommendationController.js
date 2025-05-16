@@ -120,7 +120,7 @@ const getUserTrayectoria = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Trayectorias obtenidas exitosamente",
-      trayectorias: userTrayectorias[0],
+      trayectoria: userTrayectorias[0],
     });
   } catch (error) {
     console.error("Error al obtener las trayectorias:", error);
