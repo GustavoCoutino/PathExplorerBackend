@@ -2,12 +2,30 @@ const { ChatOpenAI } = require("@langchain/openai");
 const { StringOutputParser } = require("@langchain/core/output_parsers");
 const { PromptTemplate } = require("@langchain/core/prompts");
 const { RunnableSequence } = require("@langchain/core/runnables");
+const NodeCache = require("node-cache");
 const userQueries = require("../db/queries/userQueries");
 const recommendationQueries = require("../db/queries/recommendationsQueries");
+
+const trajectoryCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
 
 const getRecommendations = async (req, res) => {
   try {
     const { id_persona } = req.user;
+
+    const userProfile = await userQueries.getUserProfile(id_persona);
+    const currentRole = userProfile.puesto_actual;
+
+    const cacheKey = `trajectory_recommendations_${currentRole}`;
+
+    const cachedRecommendations = trajectoryCache.get(cacheKey);
+
+    if (cachedRecommendations) {
+      return res.status(200).json({
+        success: true,
+        message: "Recomendaciones obtenidas desde caché",
+        recommendations: cachedRecommendations,
+      });
+    }
 
     const employeeCourses = await userQueries.getUserCourses(id_persona);
     const employeeCertifications = await userQueries.getUserCertifications(
@@ -16,7 +34,6 @@ const getRecommendations = async (req, res) => {
     const employeeSkills = await userQueries.getUserSkills(id_persona);
     const employeeProfessionalHistory =
       await userQueries.getUserProfessionalHistory(id_persona);
-    const userProfile = await userQueries.getUserProfile(id_persona);
     const employeeRole = userProfile.puesto_actual;
 
     const llm = new ChatOpenAI({
@@ -60,6 +77,7 @@ const getRecommendations = async (req, res) => {
     let recommendations;
     try {
       recommendations = JSON.parse(result);
+      trajectoryCache.set(cacheKey, recommendations);
     } catch (error) {
       console.error("Error al parsear la respuesta del LLM:", error);
       return res.status(500).json({

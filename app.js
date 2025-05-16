@@ -22,18 +22,6 @@ const port = process.env.PORT || 4000;
 
 app.use(helmet());
 app.use(cors());
-
-const recommendationsLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  message: {
-    success: false,
-    message: "Demasiadas solicitudes, por favor intente nuevamente más tarde.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 app.use(morgan("dev"));
 
 app.use(express.json());
@@ -47,12 +35,7 @@ app.use("/api/banca", auth.authenticateJWT, bancaRoutes);
 app.use("/api/development", auth.authenticateJWT, developmentRoutes);
 app.use("/api/requests", auth.authenticateJWT, requestRoutes);
 app.use("/api/notifications", auth.authenticateJWT, notificationsRoutes);
-app.use(
-  "/api/recommendations",
-  auth.authenticateJWT,
-  recommendationsLimiter,
-  recommendationRoutes
-);
+app.use("/api/recommendations", auth.authenticateJWT, recommendationRoutes);
 app.use(error);
 
 const initializeScheduledJobs = () => {
