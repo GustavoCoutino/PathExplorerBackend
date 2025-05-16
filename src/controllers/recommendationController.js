@@ -39,6 +39,7 @@ const getRecommendations = async (req, res) => {
     const llm = new ChatOpenAI({
       temperature: 0.3,
       modelName: "gpt-4",
+      openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
     let promptText = `
