@@ -13,6 +13,7 @@ const developmentRoutes = require("./src/routes/developmentRoutes");
 const requestRoutes = require("./src/routes/requestRoutes");
 const notificationsRoutes = require("./src/routes/notificationsRoutes");
 const recommendationRoutes = require("./src/routes/recommendationRoutes");
+const informesRoutes = require("./src/routes/informesRoutes");
 const { scheduleCertificationNotifications } = require("./src/certifications");
 
 dotenv.config();
@@ -36,6 +37,7 @@ app.use("/api/development", auth.authenticateJWT, developmentRoutes);
 app.use("/api/requests", auth.authenticateJWT, requestRoutes);
 app.use("/api/notifications", auth.authenticateJWT, notificationsRoutes);
 app.use("/api/recommendations", auth.authenticateJWT, recommendationRoutes);
+app.use("/api/informes", auth.authenticateJWT, informesRoutes);
 app.use(error);
 
 const initializeScheduledJobs = () => {

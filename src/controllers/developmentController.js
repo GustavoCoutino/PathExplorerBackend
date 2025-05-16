@@ -88,6 +88,7 @@ const addUserCertification = async (req, res) => {
 const editUserCourse = async (req, res) => {
   try {
     const userId = req.user.id_persona;
+
     const {
       id_curso,
       fecha_inicio,
@@ -114,21 +115,81 @@ const editUserCourse = async (req, res) => {
     });
 
     if (!updatedCourse) {
-      return res.status(500).json({
+      return res.status(404).json({
         success: false,
-        message: "Error al actualizar el curso",
+        message: "Curso no encontrado o no se pudo actualizar",
       });
     }
 
     return res.status(200).json({
       success: true,
       message: "Curso actualizado con éxito",
+      course: updatedCourse,
     });
   } catch (error) {
     console.error("Update user course error:", error);
     return res.status(500).json({
       success: false,
-      message: "Error al actualizar el curso",
+      message: `Error al actualizar el curso: ${
+        error.message || "Error desconocido"
+      }`,
+    });
+  }
+};
+
+const editUserCertification = async (req, res) => {
+  try {
+    const userId = req.user.id_persona;
+
+    const {
+      id_certificacion,
+      fecha_obtencion,
+      fecha_vencimiento,
+      estado_validacion,
+    } = req.body;
+
+    const fecha_creacion = req.body.fecha_creacion || new Date().toISOString();
+
+    if (!id_certificacion) {
+      console.error("Missing required field: id_certificacion");
+      return res.status(400).json({
+        success: false,
+        message: "ID de certificación es requerido",
+      });
+    }
+
+    const updateCertification = await developmentQueries.editUserCertification(
+      userId,
+      {
+        id_certificacion,
+        fecha_obtencion,
+        fecha_vencimiento,
+        estado_validacion,
+        fecha_creacion,
+      }
+    );
+
+    if (!updateCertification) {
+      console.error("No se encontró la certificación para actualizar");
+      return res.status(404).json({
+        success: false,
+        message: "No se encontró la certificación para actualizar",
+      });
+    }
+
+    res.setHeader("Content-Type", "application/json");
+    return res.status(200).json({
+      success: true,
+      message: "Certificación actualizada con éxito",
+      certification: updateCertification,
+    });
+  } catch (error) {
+    console.error("Update user certification error:", error);
+    res.setHeader("Content-Type", "application/json");
+    return res.status(500).json({
+      success: false,
+      message:
+        "Error al actualizar la certificación: " + (error.message || error),
     });
   }
 };
@@ -139,4 +200,5 @@ module.exports = {
   addUserCourse,
   addUserCertification,
   editUserCourse,
+  editUserCertification,
 };

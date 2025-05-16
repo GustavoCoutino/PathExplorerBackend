@@ -22,7 +22,7 @@ const getUserProject = async (id_empleado) => {
   try {
     const result = await db.query(
       `
-       SELECT p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin_estimada, p.estado
+       SELECT p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin_estimada, p.estado, p.id_manager
         FROM recursos.proyecto p
         JOIN recursos.asignacion_empleado re ON p.id_proyecto = re.id_proyecto
         WHERE re.id_empleado = $1; 
@@ -226,6 +226,46 @@ const getAllSkills = async () => {
   }
 };
 
+const getTeamMembers = async (id_proyecto) => {
+  try {
+    const result = await db.query(
+      `
+        SELECT vw_empleados_por_proyecto.* FROM vw_empleados_por_proyecto where id_proyecto = $1;
+      `,
+      [id_proyecto]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    throw error;
+  }
+};
+
+const getProjectManager = async (id_manager) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await db.query(
+      `
+        SELECT m.id_manager
+        FROM personas.manager m
+        WHERE m.id_persona = $1;
+      `,
+      [id_manager]
+    );
+    const result2 = await db.query(
+      `
+        SELECT vw_manager_completo.* from vw_manager_completo where id_manager = $1;
+      `,
+      [result.rows[0].id_manager]
+    );
+    return result2.rows;
+  } catch (error) {
+    console.error("Error fetching project manager:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserRoleInProject,
   getUserProject,
@@ -238,4 +278,6 @@ module.exports = {
   addRoleToProject,
   editProject,
   getAllSkills,
+  getTeamMembers,
+  getProjectManager,
 };
