@@ -21,4 +21,10 @@ router.get(
   recommendationController.getUserTrayectoria
 );
 
+router.get(
+  "/cursos-y-certificaciones-recomendados",
+  auth.authenticateJWT,
+  recommendationController.getCoursesAndCertificationsRecommendations
+);
+
 module.exports = router;

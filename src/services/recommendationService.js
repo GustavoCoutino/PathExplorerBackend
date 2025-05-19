@@ -1,0 +1,164 @@
+const { ChatOpenAI } = require("@langchain/openai");
+const { StringOutputParser } = require("@langchain/core/output_parsers");
+const { PromptTemplate } = require("@langchain/core/prompts");
+const { RunnableSequence } = require("@langchain/core/runnables");
+const NodeCache = require("node-cache");
+
+const trajectoryCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
+const courseRecommendationsCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
+
+async function generateTrajectoryRecommendations(userData) {
+  const { currentRole } = userData;
+  const cacheKey = `trajectory_recommendations_${currentRole}`;
+
+  const cachedRecommendations = trajectoryCache.get(cacheKey);
+  if (cachedRecommendations) {
+    return {
+      fromCache: true,
+      recommendations: cachedRecommendations,
+    };
+  }
+
+  const llm = new ChatOpenAI({
+    temperature: 0.3,
+    modelName: "gpt-4",
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+
+  let promptText = `
+    Como consultor de carrera profesional, genera 3 posibles trayectorias de desarrollo para un empleado con las siguientes características:
+    Rol: {employeeRole}
+    Cursos: {employeeCourses}
+    Certificaciones: {employeeCertifications}
+    Habilidades: {employeeSkills}
+    Historial: {employeeProfessionalHistory}
+
+    Ejemplo de trayectoria: "Desarrollo de Software: Desarrollador Junior → Desarrollador Senior → Arquitecto de Software (60 meses)"
+
+    Crea 3 trayectorias profesionales únicas basadas en este perfil. Cada trayectoria debe ser realista y adecuada 
+    a sus habilidades actuales pero con potencial de crecimiento.
+
+    Responde solo con JSON que tenga los siguientes campos: nombre, descripcion, roles_secuenciales y tiempo_estimado (debe ser un numero). Debe ser un arreglo JSON de 3 trayectorias.
+  `;
+
+  const promptTemplate = PromptTemplate.fromTemplate(promptText);
+
+  const inputParams = {
+    employeeRole: userData.currentRole,
+    employeeCourses: userData.employeeCourses,
+    employeeCertifications: userData.employeeCertifications,
+    employeeSkills: userData.employeeSkills,
+    employeeProfessionalHistory: userData.employeeProfessionalHistory,
+  };
+
+  const chain = RunnableSequence.from([
+    promptTemplate,
+    llm,
+    new StringOutputParser(),
+  ]);
+
+  const result = await chain.invoke(inputParams);
+
+  try {
+    const recommendations = JSON.parse(result);
+    trajectoryCache.set(cacheKey, recommendations);
+
+    return {
+      fromCache: false,
+      recommendations,
+    };
+  } catch (error) {
+    console.error("Error parsing LLM response:", error);
+    throw new Error("Error processing recommendations");
+  }
+}
+
+async function generateCourseAndCertRecommendations(
+  userData,
+  topCourses,
+  topCertifications
+) {
+  const { id_persona } = userData.userProfile;
+  const cacheKey = `course_recommendations_${id_persona}`;
+
+  const cachedRecommendations = courseRecommendationsCache.get(cacheKey);
+  if (cachedRecommendations) {
+    return {
+      fromCache: true,
+      recommendations: cachedRecommendations,
+    };
+  }
+
+  const llm = new ChatOpenAI({
+    temperature: 0.3,
+    modelName: "gpt-4",
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+
+  let promptText = `
+    Como consultor de carrera profesional, genera recomendaciones de cursos y certificaciones para un empleado con las siguientes características:
+    Rol: {employeeRole}
+    Cursos ya tomados: {employeeCourses}
+    Certificaciones ya obtenidas: {employeeCertifications}
+    Habilidades: {employeeSkills}
+    Historial: {employeeProfessionalHistory}
+
+    Estos son cursos recomendados por un sistema de IA basado en similitud vectorial: {topCourses}
+    Estas son certificaciones recomendadas por un sistema de IA basado en similitud vectorial: {topCertifications}
+
+    Selecciona 3 cursos y 3 certificaciones de las opciones anteriores que sean más relevantes para el desarrollo profesional del empleado.
+    Para cada recomendación, proporciona una explicación clara sobre por qué es adecuada basada en el perfil profesional.
+
+    Responde solo con JSON que tenga los siguientes campos: cursos_recomendados y certificaciones_recomendadas. Cada uno debe ser un arreglo con 3 objetos, donde cada objeto contenga id, nombre y razon_recomendacion.
+  `;
+
+  const promptTemplate = PromptTemplate.fromTemplate(promptText);
+
+  const inputParams = {
+    employeeRole: userData.currentRole,
+    employeeCourses: JSON.stringify(userData.employeeCourses.slice(0, 5)),
+    employeeCertifications: JSON.stringify(
+      userData.employeeCertifications.slice(0, 5)
+    ),
+    employeeSkills: JSON.stringify(userData.employeeSkills.slice(0, 10)),
+    employeeProfessionalHistory: JSON.stringify(
+      userData.employeeProfessionalHistory.slice(0, 3)
+    ),
+    topCourses: JSON.stringify(topCourses),
+    topCertifications: JSON.stringify(topCertifications),
+  };
+
+  const chain = RunnableSequence.from([
+    promptTemplate,
+    llm,
+    new StringOutputParser(),
+  ]);
+
+  const result = await chain.invoke(inputParams);
+
+  try {
+    const recommendations = JSON.parse(result);
+    courseRecommendationsCache.set(cacheKey, recommendations);
+
+    return {
+      fromCache: false,
+      recommendations,
+    };
+  } catch (error) {
+    console.error("Error parsing LLM response:", error);
+    throw new Error("Error processing course recommendations");
+  }
+}
+
+function invalidateRecommendationCaches(userData, id_persona) {
+  if (userData?.currentRole) {
+    trajectoryCache.del(`trajectory_recommendations_${userData.currentRole}`);
+  }
+  courseRecommendationsCache.del(`course_recommendations_${id_persona}`);
+}
+
+module.exports = {
+  generateTrajectoryRecommendations,
+  generateCourseAndCertRecommendations,
+  invalidateRecommendationCaches,
+};

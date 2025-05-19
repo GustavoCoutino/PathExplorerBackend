@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
 const auth = require("./src/middleware/auth");
 const error = require("./src/middleware/error");
@@ -14,7 +13,9 @@ const requestRoutes = require("./src/routes/requestRoutes");
 const notificationsRoutes = require("./src/routes/notificationsRoutes");
 const recommendationRoutes = require("./src/routes/recommendationRoutes");
 const informesRoutes = require("./src/routes/informesRoutes");
-const { scheduleCertificationNotifications } = require("./src/certifications");
+const {
+  scheduleCertificationNotifications,
+} = require("./src/services/certifications");
 
 dotenv.config();
 
