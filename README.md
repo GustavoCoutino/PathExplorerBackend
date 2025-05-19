@@ -26,8 +26,8 @@
 
 ## Tech Stack
 <div align="left">
-  <img src="https://img.shields.io/badge/-Javacript-black?logo=javascript" height="30" alt="postgrelogo">
+  <img src="https://img.shields.io/badge/-Javascript-black?logo=javascript" height="30" alt="postgrelogo">
 <img src="https://img.shields.io/badge/-Express-green?logo=express" height="30" alt="expresslogo">
 <img src="https://img.shields.io/badge/-PostgreSQL-lightblue?logo=postgresql" height="30" alt="postgrelogo">
-  <img src="https://img.shields.io/badge/-Supabase-black?logo=supabase" height="30" alt="supabaselogo">
+
 </div>
