@@ -8,14 +8,6 @@ const developmentQueries = require("../db/queries/developmentQueries");
 const getRecommendations = async (req, res) => {
   try {
     const { id_persona } = req.user;
-    const {
-      coursesCategory,
-      certificationsAbilities,
-      coursesAbilities,
-      coursesProvider,
-      certificationsProvider,
-    } = req.query;
-
     const userData = await userDataService.getUserData(id_persona, userQueries);
 
     const { fromCache, recommendations } =
@@ -29,7 +21,7 @@ const getRecommendations = async (req, res) => {
       recommendations,
     });
   } catch (error) {
-    console.error("Error al generar recomendaciones:", error);
+    error("Error al generar recomendaciones:", error);
     return res.status(500).json({
       success: false,
       message: "Error al generar recomendaciones",
@@ -157,9 +149,91 @@ const getCoursesAndCertificationsRecommendations = async (req, res) => {
   }
 };
 
+const getRecommendedEmployeeRoles = async (req, res) => {
+  try {
+    const { id_persona } = req.user;
+    const { roleSkills, roleState } = req.query;
+
+    const filters = {
+      roleSkills,
+      roleState,
+    };
+    const availableRoles = await recommendationQueries.getAvailableRoles();
+    const rolesWithProjects = await Promise.all(
+      availableRoles.map(async (role) => {
+        const project = await recommendationQueries.getProjectByProjectId(
+          role.id_proyecto
+        );
+        return { ...role, project };
+      })
+    );
+    const filteredRoles = roleState
+      ? rolesWithProjects.filter((role) => role.project[0].estado === roleState)
+      : rolesWithProjects;
+    const rolesWithDetails = await Promise.all(
+      filteredRoles.map(async (role) => {
+        const skills = await recommendationQueries.getRoleSkills(role.id_rol);
+        const manager = await recommendationQueries.getManager(role.id_manager);
+        return {
+          ...role,
+          skills,
+          manager,
+        };
+      })
+    );
+
+    const userData = await userDataService.getUserData(id_persona, userQueries);
+    const roleVectors = await vectorService.getOrCreateRoleVectors(
+      rolesWithDetails
+    );
+    const userVector = await vectorService.getUserProfileVector(userData);
+
+    const { topRoles } = await vectorService.findRelevantRoles(
+      userVector,
+      roleVectors,
+      5,
+      roleSkills,
+      roleState
+    );
+
+    const { fromCache, recommendations } =
+      await recommendationService.generateRoleRecommendations(
+        userData,
+        topRoles,
+        filters
+      );
+    const recommendedRolesWithProjectInfo = await Promise.all(
+      recommendations.roles_recomendados.map(async (role) => {
+        const roleWithProject = rolesWithDetails.find(
+          (r) => r.id_rol === role.id_rol
+        );
+        return {
+          ...role,
+          roleWithProject,
+        };
+      })
+    );
+    return res.status(200).json({
+      success: true,
+      message: fromCache
+        ? "Recomendaciones de roles obtenidas desde caché"
+        : "Recomendaciones de roles generadas exitosamente",
+      recommendations: recommendedRolesWithProjectInfo,
+    });
+  } catch (error) {
+    console.error("Error al generar recomendaciones de roles:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al generar recomendaciones de roles",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getRecommendations,
   createEmployeeTrayectory,
   getUserTrayectoria,
   getCoursesAndCertificationsRecommendations,
+  getRecommendedEmployeeRoles,
 };

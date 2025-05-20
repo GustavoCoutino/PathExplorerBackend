@@ -185,9 +185,73 @@ async function findRelevantCoursesAndCerts(
     topCertifications: certScores.map((c) => c.item),
   };
 }
+
+async function getOrCreateRoleVectors(roles) {
+  const cacheKey = "role_vectors";
+  const cachedVectors = vectorCache.get(cacheKey);
+
+  if (cachedVectors) {
+    return cachedVectors;
+  }
+
+  const roleTexts = roles.map((role) => {
+    return `Rol: ${role.nombre}. Descripción: ${
+      role.descripcion || ""
+    }. Habilidades requeridas: ${
+      role.skills ? role.skills.map((s) => s.nombre).join(", ") : ""
+    }. Proyecto: ${role.project ? role.project.nombre : ""}.`;
+  });
+
+  const roleVectors = await Promise.all(
+    roleTexts.map((text) => embeddings.embedQuery(text))
+  );
+
+  const roleEmbeddings = roles.map((role, index) => ({
+    original: role,
+    vector: roleVectors[index],
+  }));
+
+  vectorCache.set(cacheKey, roleEmbeddings, 24 * 60 * 60);
+
+  return roleEmbeddings;
+}
+
+async function findRelevantRoles(
+  userVector,
+  roleVectors,
+  topN = 5,
+  roleSkills = null
+) {
+  let filteredRoles = roleVectors;
+
+  if (roleSkills) {
+    const skillsVector = await embeddings.embedQuery(roleSkills);
+    const similarityThreshold = 0.75;
+
+    filteredRoles = filteredRoles.filter((item) => {
+      const similarity = cosineSimilarity(skillsVector, item.vector);
+      return similarity >= similarityThreshold;
+    });
+  }
+
+  let roleScores = filteredRoles
+    .map((item) => ({
+      item: item.original,
+      score: cosineSimilarity(userVector, item.vector),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topN);
+
+  return {
+    topRoles: roleScores.map((r) => r.item),
+  };
+}
+
 module.exports = {
   getOrCreateVectors,
   getUserProfileVector,
   findRelevantCoursesAndCerts,
   invalidateUserCache,
+  getOrCreateRoleVectors,
+  findRelevantRoles,
 };

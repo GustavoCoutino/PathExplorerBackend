@@ -6,6 +6,7 @@ const NodeCache = require("node-cache");
 
 const trajectoryCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
 const courseRecommendationsCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
+const roleRecommendationsCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
 
 async function generateTrajectoryRecommendations(userData) {
   const { currentRole } = userData;
@@ -160,15 +161,95 @@ async function generateCourseAndCertRecommendations(
   }
 }
 
+async function generateRoleRecommendations(userData, topRoles, filters = {}) {
+  const { id_persona } = userData.userProfile;
+  const filterString = Object.entries(filters)
+    .filter(([_, value]) => value !== null && value !== undefined)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+
+  const cacheKey = `role_recommendations_${id_persona}${
+    filterString ? "_" + Buffer.from(filterString).toString("base64") : ""
+  }`;
+
+  const cachedRecommendations = roleRecommendationsCache.get(cacheKey);
+  if (cachedRecommendations) {
+    return {
+      fromCache: true,
+      recommendations: cachedRecommendations,
+    };
+  }
+
+  const llm = new ChatOpenAI({
+    temperature: 0.3,
+    modelName: "gpt-4",
+    openAIApiKey: process.env.OPENAI_API_KEY,
+  });
+
+  let promptText = `
+    Como consultor de carrera profesional, genera recomendaciones de roles para un empleado con las siguientes características:
+    Rol actual: {employeeRole}
+    Cursos: {employeeCourses} 
+    Certificaciones: {employeeCertifications}
+    Habilidades: {employeeSkills}
+    Historial profesional: {employeeProfessionalHistory}
+
+    Estos son roles disponibles en la empresa que podrían ser adecuados según un sistema de IA basado en similitud vectorial: {topRoles}
+
+    Selecciona 3 roles de las opciones anteriores que sean más relevantes para el desarrollo profesional del empleado.
+    Para cada recomendación, proporciona una explicación clara sobre por qué es adecuada basada en el perfil profesional
+    y cómo se alinea con las metas profesionales del empleado.
+
+    Responde solo con JSON que tenga el siguiente campo: roles_recomendados. Debe ser un arreglo con 3 objetos, 
+    donde cada objeto contenga id_rol, nombre, razon_recomendacion, y compatibilidad_porcentaje (un número del 1 al 100).
+
+    En caso de que no haya suficientes roles, no es necesario incluir los 3, es posible regresar un arreglo más pequeño. Responde unicamente en JSON, no incluyas texto adicional.
+  `;
+
+  const promptTemplate = PromptTemplate.fromTemplate(promptText);
+
+  const inputParams = {
+    employeeRole: userData.currentRole,
+    employeeCourses: userData.employeeCourses,
+    employeeCertifications: userData.employeeCertifications,
+    employeeSkills: userData.employeeSkills,
+    employeeProfessionalHistory: userData.employeeProfessionalHistory,
+    topRoles: JSON.stringify(topRoles),
+  };
+
+  const chain = RunnableSequence.from([
+    promptTemplate,
+    llm,
+    new StringOutputParser(),
+  ]);
+
+  const result = await chain.invoke(inputParams);
+
+  try {
+    const recommendations = JSON.parse(result);
+    roleRecommendationsCache.set(cacheKey, recommendations);
+
+    return {
+      fromCache: false,
+      recommendations,
+    };
+  } catch (error) {
+    console.error("Error parsing LLM response:", error);
+    throw new Error("Error processing role recommendations");
+  }
+}
+
 function invalidateRecommendationCaches(userData, id_persona) {
   if (userData?.currentRole) {
     trajectoryCache.del(`trajectory_recommendations_${userData.currentRole}`);
   }
   courseRecommendationsCache.del(`course_recommendations_${id_persona}`);
+  roleRecommendationsCache.del(`role_recommendations_${id_persona}`);
 }
 
 module.exports = {
   generateTrajectoryRecommendations,
   generateCourseAndCertRecommendations,
   invalidateRecommendationCaches,
+  generateRoleRecommendations,
 };

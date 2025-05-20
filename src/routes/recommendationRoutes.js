@@ -27,4 +27,9 @@ router.get(
   recommendationController.getCoursesAndCertificationsRecommendations
 );
 
+router.get(
+  "/roles-recomendados",
+  auth.authenticateJWT,
+  recommendationController.getRecommendedEmployeeRoles
+);
 module.exports = router;
