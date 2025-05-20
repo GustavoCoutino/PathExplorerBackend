@@ -112,7 +112,12 @@ async function findRelevantCoursesAndCerts(
   userData,
   userVector,
   vectors,
-  topN = 5
+  topN = 5,
+  coursesCategory = null,
+  certificationsAbilities = null,
+  coursesAbilities = null,
+  coursesProvider = null,
+  certificationsProvider = null
 ) {
   const userCourseIds = new Set(
     userData.employeeCourses.map((c) => c.id_curso)
@@ -121,8 +126,45 @@ async function findRelevantCoursesAndCerts(
     userData.employeeCertifications.map((c) => c.id_certificacion)
   );
 
-  const courseScores = vectors.courseEmbeddings
+  let courseEmbeddings = vectors.courseEmbeddings
     .filter((item) => !userCourseIds.has(item.original.id_curso))
+    .filter(
+      (item) => !coursesCategory || item.original.categoria === coursesCategory
+    )
+    .filter(
+      (item) =>
+        !coursesProvider || item.original.institucion === coursesProvider
+    );
+
+  let certEmbeddings = vectors.certEmbeddings
+    .filter((item) => !userCertIds.has(item.original.id_certificacion))
+    .filter(
+      (item) =>
+        !certificationsProvider ||
+        item.original.institucion === certificationsProvider
+    );
+
+  if (coursesAbilities) {
+    const abilityVector = await embeddings.embedQuery(coursesAbilities);
+    const similarityThreshold = 0.75;
+
+    courseEmbeddings = courseEmbeddings.filter((item) => {
+      const similarity = cosineSimilarity(abilityVector, item.vector);
+      return similarity >= similarityThreshold;
+    });
+  }
+
+  if (certificationsAbilities) {
+    const abilityVector = await embeddings.embedQuery(certificationsAbilities);
+    const similarityThreshold = 0.75;
+
+    certEmbeddings = certEmbeddings.filter((item) => {
+      const similarity = cosineSimilarity(abilityVector, item.vector);
+      return similarity >= similarityThreshold;
+    });
+  }
+
+  let courseScores = courseEmbeddings
     .map((item) => ({
       item: item.original,
       score: cosineSimilarity(userVector, item.vector),
@@ -130,8 +172,7 @@ async function findRelevantCoursesAndCerts(
     .sort((a, b) => b.score - a.score)
     .slice(0, topN);
 
-  const certScores = vectors.certEmbeddings
-    .filter((item) => !userCertIds.has(item.original.id_certificacion))
+  let certScores = certEmbeddings
     .map((item) => ({
       item: item.original,
       score: cosineSimilarity(userVector, item.vector),
@@ -144,7 +185,6 @@ async function findRelevantCoursesAndCerts(
     topCertifications: certScores.map((c) => c.item),
   };
 }
-
 module.exports = {
   getOrCreateVectors,
   getUserProfileVector,

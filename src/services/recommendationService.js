@@ -76,10 +76,18 @@ async function generateTrajectoryRecommendations(userData) {
 async function generateCourseAndCertRecommendations(
   userData,
   topCourses,
-  topCertifications
+  topCertifications,
+  filters = {}
 ) {
   const { id_persona } = userData.userProfile;
-  const cacheKey = `course_recommendations_${id_persona}`;
+  const filterString = Object.entries(filters)
+    .filter(([_, value]) => value !== null && value !== undefined)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+
+  const cacheKey = `course_recommendations_${id_persona}${
+    filterString ? "_" + Buffer.from(filterString).toString("base64") : ""
+  }`;
 
   const cachedRecommendations = courseRecommendationsCache.get(cacheKey);
   if (cachedRecommendations) {
@@ -110,6 +118,8 @@ async function generateCourseAndCertRecommendations(
     Para cada recomendación, proporciona una explicación clara sobre por qué es adecuada basada en el perfil profesional.
 
     Responde solo con JSON que tenga los siguientes campos: cursos_recomendados y certificaciones_recomendadas. Cada uno debe ser un arreglo con 3 objetos, donde cada objeto contenga id, nombre y razon_recomendacion.
+
+    En caso de que no haya suficientes cursos o certificaciones, no es necesario incluir los 3 de cada uno, es posible regresar un arreglo vacio.
   `;
 
   const promptTemplate = PromptTemplate.fromTemplate(promptText);

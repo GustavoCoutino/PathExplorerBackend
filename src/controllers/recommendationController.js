@@ -8,6 +8,13 @@ const developmentQueries = require("../db/queries/developmentQueries");
 const getRecommendations = async (req, res) => {
   try {
     const { id_persona } = req.user;
+    const {
+      coursesCategory,
+      certificationsAbilities,
+      coursesAbilities,
+      coursesProvider,
+      certificationsProvider,
+    } = req.query;
 
     const userData = await userDataService.getUserData(id_persona, userQueries);
 
@@ -90,6 +97,22 @@ const getCoursesAndCertificationsRecommendations = async (req, res) => {
   try {
     const { id_persona } = req.user;
 
+    const {
+      coursesCategory,
+      certificationsAbilities,
+      coursesAbilities,
+      coursesProvider,
+      certificationsProvider,
+    } = req.query;
+
+    const filters = {
+      coursesCategory,
+      certificationsAbilities,
+      coursesAbilities,
+      coursesProvider,
+      certificationsProvider,
+    };
+
     const userData = await userDataService.getUserData(id_persona, userQueries);
 
     const vectors = await vectorService.getOrCreateVectors(developmentQueries);
@@ -101,14 +124,20 @@ const getCoursesAndCertificationsRecommendations = async (req, res) => {
         userData,
         userVector,
         vectors,
-        10
+        10,
+        coursesCategory,
+        certificationsAbilities,
+        coursesAbilities,
+        coursesProvider,
+        certificationsProvider
       );
 
     const { fromCache, recommendations } =
       await recommendationService.generateCourseAndCertRecommendations(
         userData,
         topCourses,
-        topCertifications
+        topCertifications,
+        filters
       );
 
     return res.status(200).json({
