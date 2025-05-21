@@ -4,6 +4,7 @@ const recommendationService = require("../services/recommendationService");
 const recommendationQueries = require("../db/queries/recommendationsQueries");
 const userQueries = require("../db/queries/userQueries");
 const developmentQueries = require("../db/queries/developmentQueries");
+const projectQueries = require("../db/queries/projectQueries");
 
 const getRecommendations = async (req, res) => {
   try {
@@ -149,6 +150,35 @@ const getCoursesAndCertificationsRecommendations = async (req, res) => {
   }
 };
 
+const getFilterOptions = async (req, res) => {
+  try {
+    const uniqueCategoriesCourses =
+      await recommendationQueries.getUniqueCategoriesCourses();
+    const uniqueInstitutionsCourses =
+      await recommendationQueries.getUniqueInstitutionsCourses();
+    const uniqueInstitutionsCertifications =
+      await recommendationQueries.getUniqueInstitutionsCertifications();
+    const allSkills = await projectQueries.getAllSkills();
+    const allSkillsNames = allSkills.map((skill) => skill.nombre);
+
+    return res.status(200).json({
+      success: true,
+      message: "Opciones de filtro obtenidas exitosamente",
+      uniqueCategoriesCourses,
+      uniqueInstitutionsCourses,
+      uniqueInstitutionsCertifications,
+      allSkillsNames,
+    });
+  } catch (error) {
+    console.error("Error al obtener las opciones de filtro:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener las opciones de filtro",
+      error: error.message,
+    });
+  }
+};
+
 const getRecommendedEmployeeRoles = async (req, res) => {
   try {
     const { id_persona } = req.user;
@@ -236,4 +266,5 @@ module.exports = {
   getUserTrayectoria,
   getCoursesAndCertificationsRecommendations,
   getRecommendedEmployeeRoles,
+  getFilterOptions,
 };

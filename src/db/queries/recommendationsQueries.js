@@ -137,6 +137,42 @@ const getManager = async (id_persona) => {
   }
 };
 
+const getUniqueCategoriesCourses = async () => {
+  try {
+    const result = await db.query(
+      `SELECT DISTINCT desarrollo.curso.categoria FROM desarrollo.curso;`
+    );
+    return result.rows.map((row) => row.categoria);
+  } catch (error) {
+    console.error("Error fetching unique categories:", error);
+    throw error;
+  }
+};
+
+const getUniqueInstitutionsCourses = async () => {
+  try {
+    const result = await db.query(
+      `SELECT DISTINCT institucion FROM desarrollo.curso;`
+    );
+    return result.rows.map((row) => row.institucion);
+  } catch (error) {
+    console.error("Error fetching unique institutions:", error);
+    throw error;
+  }
+};
+
+const getUniqueInstitutionsCertifications = async () => {
+  try {
+    const result = await db.query(
+      `SELECT DISTINCT institucion FROM desarrollo.certificacion;`
+    );
+    return result.rows.map((row) => row.institucion);
+  } catch (error) {
+    console.error("Error fetching unique institutions:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   addTrayectoryWithUser,
   getUserTrayectoria,
@@ -144,4 +180,7 @@ module.exports = {
   getProjectByProjectId,
   getRoleSkills,
   getManager,
+  getUniqueCategoriesCourses,
+  getUniqueInstitutionsCourses,
+  getUniqueInstitutionsCertifications,
 };

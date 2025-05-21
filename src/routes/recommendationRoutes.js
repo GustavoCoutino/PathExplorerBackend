@@ -32,4 +32,10 @@ router.get(
   auth.authenticateJWT,
   recommendationController.getRecommendedEmployeeRoles
 );
+
+router.get(
+  "/filter-options",
+  auth.authenticateJWT,
+  recommendationController.getFilterOptions
+);
 module.exports = router;

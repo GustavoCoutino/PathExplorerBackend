@@ -29,13 +29,17 @@ async function getOrCreateVectors(developmentQueries) {
   const courseTexts = courses.map((course) => {
     return `Curso: ${course.nombre}. Descripción: ${
       course.descripcion || ""
-    }. Categoría: ${course.categoria || ""}. Nivel: ${course.nivel || ""}`;
+    }. Categoría: ${course.categoria || ""}. Nivel: ${
+      course.nivel || ""
+    }. Institucion: ${course.institucion || ""}. Duración: ${
+      course.duracion || ""
+    }.`;
   });
 
   const certTexts = certifications.map((cert) => {
     return `Certificación: ${cert.nombre}. Descripción: ${
       cert.descripcion || ""
-    }. Emisor: ${cert.emisor || ""}. Categoría: ${cert.categoria || ""}`;
+    }. Institucion: ${cert.institucion || ""}`;
   });
 
   const courseVectors = await Promise.all(
