@@ -104,6 +104,25 @@ async function generateCourseAndCertRecommendations(
     openAIApiKey: process.env.OPENAI_API_KEY,
   });
 
+  let promptText = `
+    Como consultor de carrera profesional, genera recomendaciones de cursos y certificaciones para un empleado con las siguientes características:
+    Rol: {employeeRole}
+    Cursos ya tomados: {employeeCourses}
+    Certificaciones ya obtenidas: {employeeCertifications}
+    Habilidades: {employeeSkills}
+    Historial: {employeeProfessionalHistory}
+
+    Estos son cursos recomendados por un sistema de IA basado en similitud vectorial: {topCourses}
+    Estas son certificaciones recomendadas por un sistema de IA basado en similitud vectorial: {topCertifications}
+
+    Selecciona 3 cursos y 3 certificaciones de las opciones anteriores que sean más relevantes para el desarrollo profesional del empleado.
+    Para cada recomendación, proporciona una explicación clara sobre por qué es adecuada basada en el perfil profesional.
+
+    Responde solo con JSON que tenga los siguientes campos: cursos_recomendados y certificaciones_recomendadas. Cada uno debe ser un arreglo con 3 objetos, donde cada objeto contenga id, nombre, institucion, descripcion, y razon_recomendacion.
+
+    En caso de que no haya suficientes cursos o certificaciones, no es necesario incluir los 3 de cada uno, es posible regresar un arreglo vacio.
+  `;
+
   const promptTemplate = PromptTemplate.fromTemplate(promptText);
 
   const inputParams = {
