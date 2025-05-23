@@ -1,6 +1,7 @@
 const feedbackQueries = require("../db/queries/feedbackQueries");
 const userQueries = require("../db/queries/userQueries");
 const recommendationsQueries = require("../db/queries/recommendationsQueries");
+const projectQueries = require("../db/queries/projectQueries");
 
 const getEvaluacionesManager = async (req, res) => {
   const { id_persona } = req.user;
@@ -142,9 +143,44 @@ const createEvaluacion = async (req, res) => {
   }
 };
 
+const getProyectAndTeam = async (req, res) => {
+  const { id_persona } = req.user;
+
+  try {
+    const proyectos = await projectQueries.getManagerProjects(id_persona);
+    const integrantesConNombreProyecto = await Promise.all(
+      proyectos.map(async (proyecto) => {
+        const integrantes = await projectQueries.getTeamMembers(
+          proyecto.id_proyecto
+        );
+        if (integrantes.length === 0) {
+          return {
+            proyecto: proyecto.nombre,
+            integrantes: [],
+          };
+        }
+        return {
+          proyecto: proyecto.nombre,
+          integrantes: {
+            id_empleado: integrantes[0].id_empleado,
+            nombre: integrantes[0].nombre_empleado,
+          },
+        };
+      })
+    );
+    res.status(200).json({
+      equipos: integrantesConNombreProyecto,
+    });
+  } catch (error) {
+    console.error("Error obteniendo proyectos y equipos:", error);
+    res.status(500).json({ message: "Error obteniendo proyectos y equipos" });
+  }
+};
+
 module.exports = {
   getEvaluacionesManager,
   getEvaluacionesEmpleado,
   getEvaluacionesAdministrador,
   createEvaluacion,
+  getProyectAndTeam,
 };

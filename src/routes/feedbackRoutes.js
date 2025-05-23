@@ -27,4 +27,11 @@ router.post(
   auth.authorize(["manager"]),
   feedbackController.createEvaluacion
 );
+
+router.get(
+  "/team-and-members",
+  auth.authenticateJWT,
+  auth.authorize(["manager"]),
+  feedbackController.getProyectAndTeam
+);
 module.exports = router;
