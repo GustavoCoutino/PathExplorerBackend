@@ -158,22 +158,33 @@ const editProject = async (req, res) => {
     fecha_inicio,
     fecha_fin_estimada,
     prioridad,
+    roles,
   } = req.body;
 
   try {
-    const updatedProject = await projectQueries.editProject({
+    await projectQueries.editProject({
       id_proyecto,
       nombre,
       descripcion,
       fecha_inicio,
       fecha_fin_estimada,
       prioridad,
+      roles,
     });
+    Promise.all(
+      roles.map(async (role) => {
+        await projectQueries.editProjectRole(role);
+        Promise.all(
+          role.habilidades.map(async (skill) => {
+            await projectQueries.editProjectSkill(skill);
+          })
+        );
+      })
+    );
 
     res.status(200).json({
       success: true,
       message: "Proyecto editado exitosamente",
-      project: updatedProject,
     });
   } catch (error) {
     console.error("Error editando proyecto:", error);

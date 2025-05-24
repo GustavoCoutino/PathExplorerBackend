@@ -166,6 +166,61 @@ const editProject = async (projectData) => {
   }
 };
 
+const editProjectRole = async (role) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE recursos.rol SET titulo = $1, descripcion = $2, nivel_experiencia_requerido = $3 WHERE id_rol = $4 RETURNING *;`,
+      [
+        role.titulo,
+        role.descripcion,
+        role.nivel_experiencia_requerido,
+        role.id_rol,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error editing project role:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const editProjectSkill = async (roles) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE recursos.rol_habilidad SET nivel_minimo_requerido = $1, importancia = $2 WHERE id_rol = $3 AND id_habilidad = $4 RETURNING *;`,
+      [
+        roles.nivel_minimo_requerido,
+        roles.importancia,
+        roles.id_rol,
+        roles.id_habilidad,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error editing project skill:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 const addRoleToProject = async (
   titulo,
   descripcion,
@@ -277,6 +332,8 @@ module.exports = {
   getBestCandidatesForRole,
   addRoleToProject,
   editProject,
+  editProjectRole,
+  editProjectSkill,
   getAllSkills,
   getTeamMembers,
   getProjectManager,
