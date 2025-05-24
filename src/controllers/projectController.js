@@ -203,11 +203,11 @@ const addRoleToProject = async (req, res) => {
       nivel_experiencia_requerido,
       estado,
       id_proyecto,
-      id_manager,
-      id_habilidad,
-      nivel_minimo_requerido,
-      importancia,
+      skills,
     } = req.body;
+    const { id_persona } = req.user;
+    const managerData = await userQueries.determineUserType(id_persona);
+    const id_manager = managerData.roleData.id_persona;
 
     const result = await projectQueries.addRoleToProject(
       titulo,
@@ -216,9 +216,7 @@ const addRoleToProject = async (req, res) => {
       estado,
       id_proyecto,
       id_manager,
-      id_habilidad,
-      nivel_minimo_requerido,
-      importancia
+      skills
     );
 
     if (result) {

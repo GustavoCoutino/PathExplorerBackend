@@ -228,9 +228,7 @@ const addRoleToProject = async (
   estado,
   id_proyecto,
   id_manager,
-  id_habilidad,
-  nivel_minimo_requerido,
-  importancia
+  habilidades
 ) => {
   const client = await db.connect();
 
@@ -249,10 +247,19 @@ const addRoleToProject = async (
       ]
     );
 
-    await client.query(
-      `INSERT INTO recursos.rol_habilidad (id_rol, id_habilidad, nivel_minimo_requerido, importancia) VALUES ($1, $2, $3, $4);`,
-      [result.rows[0].id_rol, id_habilidad, nivel_minimo_requerido, importancia]
+    const roleId = result.rows[0].id_rol;
+    const skillPromises = habilidades.map((skill) =>
+      client.query(
+        `INSERT INTO recursos.rol_habilidad (id_rol, id_habilidad, nivel_minimo_requerido, importancia) VALUES ($1, $2, $3, $4);`,
+        [
+          roleId,
+          skill.id_habilidad,
+          skill.nivel_minimo_requerido,
+          skill.importancia,
+        ]
+      )
     );
+    await Promise.all(skillPromises);
 
     await client.query("COMMIT");
 
