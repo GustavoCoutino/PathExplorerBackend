@@ -1,5 +1,29 @@
 const db = require("./../pool");
 
+const createNotification = async (
+  id_persona,
+  titulo,
+  mensaje,
+  tipo,
+  prioridad,
+  leida = false
+) => {
+  try {
+    const result = await db.query(
+      `
+            INSERT INTO sistema.notificaciones (id_persona, tipo, titulo, mensaje, prioridad, leida, fecha_creacion) 
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            RETURNING *;
+        `,
+      [id_persona, tipo, titulo, mensaje, prioridad, leida]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    throw error;
+  }
+};
+
 const getUserNotifications = async (id_persona) => {
   try {
     const result = await db.query(
@@ -120,7 +144,9 @@ const addCertificationNotifications = async () => {
 };
 
 module.exports = {
+  createNotification,
+  addNotificationToCertificates,
   getUserNotifications,
   markNotificationAsRead,
-  addNotificationToCertificates,
+  addCertificationNotifications,
 };

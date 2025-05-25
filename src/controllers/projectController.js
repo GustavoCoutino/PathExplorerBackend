@@ -1,5 +1,6 @@
 const projectQueries = require("../db/queries/projectQueries");
 const userQueries = require("../db/queries/userQueries");
+const notificationsQueries = require("../db/queries/notificationsQueries");
 
 const getUserProjectAndRole = async (req, res) => {
   const id_empleado = req.body.id_empleado;
@@ -158,22 +159,33 @@ const editProject = async (req, res) => {
     fecha_inicio,
     fecha_fin_estimada,
     prioridad,
+    roles,
   } = req.body;
 
   try {
-    const updatedProject = await projectQueries.editProject({
+    await projectQueries.editProject({
       id_proyecto,
       nombre,
       descripcion,
       fecha_inicio,
       fecha_fin_estimada,
       prioridad,
+      roles,
     });
+    Promise.all(
+      roles.map(async (role) => {
+        await projectQueries.editProjectRole(role);
+        Promise.all(
+          role.habilidades.map(async (skill) => {
+            await projectQueries.editProjectSkill(skill);
+          })
+        );
+      })
+    );
 
     res.status(200).json({
       success: true,
       message: "Proyecto editado exitosamente",
-      project: updatedProject,
     });
   } catch (error) {
     console.error("Error editando proyecto:", error);
@@ -192,11 +204,11 @@ const addRoleToProject = async (req, res) => {
       nivel_experiencia_requerido,
       estado,
       id_proyecto,
-      id_manager,
-      id_habilidad,
-      nivel_minimo_requerido,
-      importancia,
+      skills,
     } = req.body;
+    const { id_persona } = req.user;
+    const managerData = await userQueries.determineUserType(id_persona);
+    const id_manager = managerData.roleData.id_persona;
 
     const result = await projectQueries.addRoleToProject(
       titulo,
@@ -205,9 +217,7 @@ const addRoleToProject = async (req, res) => {
       estado,
       id_proyecto,
       id_manager,
-      id_habilidad,
-      nivel_minimo_requerido,
-      importancia
+      skills
     );
 
     if (result) {
@@ -227,6 +237,38 @@ const addRoleToProject = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error adding role to project",
+    });
+  }
+};
+
+const removeRoleFromProject = async (req, res) => {
+  try {
+    const { id_rol, mensaje } = req.body;
+    const { id_persona } = req.user;
+    const result = await projectQueries.deleteRole(id_rol);
+    await notificationsQueries.createNotification(
+      id_persona,
+      "Eliminacion de rol",
+      mensaje,
+      "ASIGNACION"
+    );
+
+    if (result) {
+      res.status(200).json({
+        success: true,
+        message: "Rol eliminado del proyecto exitosamente",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Error al eliminar rol del proyecto",
+      });
+    }
+  } catch (error) {
+    console.error("Error removing role from project:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error removing role from project",
     });
   }
 };
@@ -252,6 +294,7 @@ module.exports = {
   getManagerProjectsWithRoles,
   createProject,
   getBestCandidatesForRole,
+  removeRoleFromProject,
   addRoleToProject,
   editProject,
   getAllSkills,
