@@ -1,5 +1,6 @@
 const projectQueries = require("../db/queries/projectQueries");
 const userQueries = require("../db/queries/userQueries");
+const notificationsQueries = require("../db/queries/notificationsQueries");
 
 const getUserProjectAndRole = async (req, res) => {
   const id_empleado = req.body.id_empleado;
@@ -240,6 +241,38 @@ const addRoleToProject = async (req, res) => {
   }
 };
 
+const removeRoleFromProject = async (req, res) => {
+  try {
+    const { id_rol, mensaje } = req.body;
+    const { id_persona } = req.user;
+    const result = await projectQueries.deleteRole(id_rol);
+    await notificationsQueries.createNotification(
+      id_persona,
+      "Eliminacion de rol",
+      mensaje,
+      "ASIGNACION"
+    );
+
+    if (result) {
+      res.status(200).json({
+        success: true,
+        message: "Rol eliminado del proyecto exitosamente",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Error al eliminar rol del proyecto",
+      });
+    }
+  } catch (error) {
+    console.error("Error removing role from project:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error removing role from project",
+    });
+  }
+};
+
 const getAllSkills = async (req, res) => {
   try {
     const skills = await projectQueries.getAllSkills();
@@ -261,6 +294,7 @@ module.exports = {
   getManagerProjectsWithRoles,
   createProject,
   getBestCandidatesForRole,
+  removeRoleFromProject,
   addRoleToProject,
   editProject,
   getAllSkills,

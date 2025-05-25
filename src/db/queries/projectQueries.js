@@ -273,6 +273,35 @@ const addRoleToProject = async (
   }
 };
 
+const deleteRole = async (id_rol) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `DELETE FROM recursos.rol WHERE id_rol = $1 RETURNING *;`,
+      [id_rol]
+    );
+
+    const roleId = result.rows[0].id_rol;
+    await client.query(
+      `DELETE FROM recursos.rol_habilidad WHERE id_rol = $1;`,
+      [roleId]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error deleting role:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 const getAllSkills = async () => {
   try {
     const result = await db.query(
@@ -341,6 +370,7 @@ module.exports = {
   editProject,
   editProjectRole,
   editProjectSkill,
+  deleteRole,
   getAllSkills,
   getTeamMembers,
   getProjectManager,
