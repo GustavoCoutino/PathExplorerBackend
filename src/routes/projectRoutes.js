@@ -39,6 +39,12 @@ router.post(
   auth.authorize("manager"),
   projectController.addRoleToProject
 );
+router.delete(
+  "/remove-role-from-project",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  projectController.removeRoleFromProject
+);
 router.get("/all-skills", auth.authenticateJWT, projectController.getAllSkills);
 
 module.exports = router;
