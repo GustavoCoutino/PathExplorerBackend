@@ -12,7 +12,7 @@ router.get(
 router.post(
   "/create-assignment-request",
   auth.authenticateJWT,
-  auth.authorize("manager"),
+  auth.authorize(["manager", "empleado"]), // Para la página de recomendaciones
   requestController.createAssignmentRequest
 );
 router.patch(
@@ -25,7 +25,7 @@ router.patch(
 router.get(
   "/administrators",
   auth.authenticateJWT,
-  auth.authorize("manager"),
+  auth.authorize(["manager", "empleado"]), // Para la página de recomendaciones
   requestController.getAllAdministratorsForRequest
 );
 module.exports = router;
