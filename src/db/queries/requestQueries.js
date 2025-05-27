@@ -31,8 +31,8 @@ const getAssignmentRequests = async (id_administrador) => {
 };
 
 const createAssignmentRequest = async (
-  id_manager,
   id_administrador,
+  id_manager,
   id_empleado,
   id_rol,
   fecha_solicitud,
@@ -45,22 +45,6 @@ const createAssignmentRequest = async (
   fecha_actualizacion
 ) => {
   try {
-    // ← AGREGAR: Log para debug
-    console.log("Executing query with values:", {
-      id_manager,
-      id_administrador,
-      id_empleado,
-      id_rol,
-      fecha_solicitud,
-      justificacion,
-      urgencia,
-      estado,
-      comentarios_resolucion,
-      fecha_resolucion,
-      fecha_creacion,
-      fecha_actualizacion
-    });
-
     const result = await db.query(
       `
             INSERT INTO evaluacion.solicitud_asignacion (
@@ -94,8 +78,6 @@ const createAssignmentRequest = async (
         fecha_actualizacion,
       ]
     );
-    
-    console.log("Query executed successfully:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
     console.error("Error creating assignment request:", error);
@@ -145,9 +127,25 @@ const getAllAdministrators = async () => {
   }
 };
 
+const findManagerById = async (id_manager) => {
+  try {
+    const result = await db.query(
+      `
+            SELECT personas.manager.id_manager FROM personas.manager WHERE id_persona = $1
+        `,
+      [id_manager]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching manager by ID:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   endAssignmentRequest,
   getAllAdministrators,
+  findManagerById,
 };

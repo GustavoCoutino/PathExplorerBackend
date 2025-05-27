@@ -31,9 +31,9 @@ async function getAssignmentRequests(req, res) {
 async function createAssignmentRequest(req, res) {
   const {
     id_administrador,
+    id_manager,
     id_empleado,
     id_rol,
-    id_manager, // ← AGREGAR: Extraer id_manager del request body
     fecha_solicitud,
     justificacion,
     urgencia,
@@ -43,35 +43,12 @@ async function createAssignmentRequest(req, res) {
     fecha_creacion,
     fecha_actualizacion,
   } = req.body;
-
-  // ← REMOVER: Ya no necesitamos obtener el id_manager del usuario actual
-  // const { id_persona } = req.user;
-  // const role = await userQueries.determineUserType(id_persona);
-  // const id_manager = role.roleData.id_manager;
-
-  // ← AGREGAR: Validación para asegurar que id_manager existe
-  if (!id_manager) {
-    return res.status(400).json({ 
-      message: "id_manager es requerido" 
-    });
-  }
-
+  const manager = await requestQueries.findManagerById(id_manager);
+  const real_id_manager = manager ? manager.id_manager : null;
   try {
-    // ← AGREGAR: Log para debug
-    console.log("Creating assignment request with data:", {
-      id_manager,
-      id_administrador,
-      id_empleado,
-      id_rol,
-      fecha_solicitud,
-      justificacion,
-      urgencia,
-      estado
-    });
-
     const newRequest = await requestQueries.createAssignmentRequest(
-      id_manager,
       id_administrador,
+      real_id_manager,
       id_empleado,
       id_rol,
       fecha_solicitud,
