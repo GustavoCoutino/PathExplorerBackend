@@ -38,14 +38,6 @@ const getUserProjectAndRole = async (req, res) => {
 const getManagerProjectsWithRoles = async (req, res) => {
   try {
     const id_persona = req.user.id_persona;
-    const userTypeInfo = await userQueries.determineUserType(id_persona);
-
-    if (userTypeInfo.role !== "manager") {
-      return res.status(403).json({
-        success: false,
-        message: "Solo los managers pueden acceder a esta funcionalidad",
-      });
-    }
 
     const managerProjects = await projectQueries.getManagerProjects(id_persona);
 
