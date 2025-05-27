@@ -160,6 +160,7 @@ const getProyectAndTeam = async (req, res) => {
           };
         }
         return {
+          id_proyecto: proyecto.id_proyecto, 
           proyecto: proyecto.nombre,
           integrantes: {
             id_empleado: integrantes[0].id_empleado,
