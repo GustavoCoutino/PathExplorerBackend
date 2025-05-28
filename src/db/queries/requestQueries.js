@@ -31,8 +31,8 @@ const getAssignmentRequests = async (id_administrador) => {
 };
 
 const createAssignmentRequest = async (
-  id_manager,
   id_administrador,
+  id_manager,
   id_empleado,
   id_rol,
   fecha_solicitud,
@@ -127,9 +127,25 @@ const getAllAdministrators = async () => {
   }
 };
 
+const findManagerById = async (id_manager) => {
+  try {
+    const result = await db.query(
+      `
+            SELECT personas.manager.id_manager FROM personas.manager WHERE id_persona = $1
+        `,
+      [id_manager]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching manager by ID:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   endAssignmentRequest,
   getAllAdministrators,
+  findManagerById,
 };
