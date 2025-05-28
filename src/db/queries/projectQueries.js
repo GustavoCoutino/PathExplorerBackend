@@ -166,6 +166,61 @@ const editProject = async (projectData) => {
   }
 };
 
+const editProjectRole = async (role) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE recursos.rol SET titulo = $1, descripcion = $2, nivel_experiencia_requerido = $3 WHERE id_rol = $4 RETURNING *;`,
+      [
+        role.titulo,
+        role.descripcion,
+        role.nivel_experiencia_requerido,
+        role.id_rol,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error editing project role:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const editProjectSkill = async (roles) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE recursos.rol_habilidad SET nivel_minimo_requerido = $1, importancia = $2 WHERE id_rol = $3 AND id_habilidad = $4 RETURNING *;`,
+      [
+        roles.nivel_minimo_requerido,
+        roles.importancia,
+        roles.id_rol,
+        roles.id_habilidad,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error editing project skill:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 const addRoleToProject = async (
   titulo,
   descripcion,
@@ -173,9 +228,7 @@ const addRoleToProject = async (
   estado,
   id_proyecto,
   id_manager,
-  id_habilidad,
-  nivel_minimo_requerido,
-  importancia
+  habilidades
 ) => {
   const client = await db.connect();
 
@@ -194,10 +247,19 @@ const addRoleToProject = async (
       ]
     );
 
-    await client.query(
-      `INSERT INTO recursos.rol_habilidad (id_rol, id_habilidad, nivel_minimo_requerido, importancia) VALUES ($1, $2, $3, $4);`,
-      [result.rows[0].id_rol, id_habilidad, nivel_minimo_requerido, importancia]
+    const roleId = result.rows[0].id_rol;
+    const skillPromises = habilidades.map((skill) =>
+      client.query(
+        `INSERT INTO recursos.rol_habilidad (id_rol, id_habilidad, nivel_minimo_requerido, importancia) VALUES ($1, $2, $3, $4);`,
+        [
+          roleId,
+          skill.id_habilidad,
+          skill.nivel_minimo_requerido,
+          skill.importancia,
+        ]
+      )
     );
+    await Promise.all(skillPromises);
 
     await client.query("COMMIT");
 
@@ -205,6 +267,35 @@ const addRoleToProject = async (
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error adding role to project:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+const deleteRole = async (id_rol) => {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `DELETE FROM recursos.rol WHERE id_rol = $1 RETURNING *;`,
+      [id_rol]
+    );
+
+    const roleId = result.rows[0].id_rol;
+    await client.query(
+      `DELETE FROM recursos.rol_habilidad WHERE id_rol = $1;`,
+      [roleId]
+    );
+
+    await client.query("COMMIT");
+
+    return result.rows;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error deleting role:", error);
     throw error;
   } finally {
     client.release();
@@ -277,6 +368,9 @@ module.exports = {
   getBestCandidatesForRole,
   addRoleToProject,
   editProject,
+  editProjectRole,
+  editProjectSkill,
+  deleteRole,
   getAllSkills,
   getTeamMembers,
   getProjectManager,
