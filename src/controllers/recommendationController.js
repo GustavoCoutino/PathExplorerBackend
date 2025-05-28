@@ -1,99 +1,28 @@
-const { ChatOpenAI } = require("@langchain/openai");
-const { StringOutputParser } = require("@langchain/core/output_parsers");
-const { PromptTemplate } = require("@langchain/core/prompts");
-const { RunnableSequence } = require("@langchain/core/runnables");
-const NodeCache = require("node-cache");
-const userQueries = require("../db/queries/userQueries");
+const userDataService = require("../services/userDataService");
+const vectorService = require("../services/vectorService");
+const recommendationService = require("../services/recommendationService");
 const recommendationQueries = require("../db/queries/recommendationsQueries");
-
-const trajectoryCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
+const userQueries = require("../db/queries/userQueries");
+const developmentQueries = require("../db/queries/developmentQueries");
+const projectQueries = require("../db/queries/projectQueries");
 
 const getRecommendations = async (req, res) => {
   try {
     const { id_persona } = req.user;
+    const userData = await userDataService.getUserData(id_persona, userQueries);
 
-    const userProfile = await userQueries.getUserProfile(id_persona);
-    const currentRole = userProfile.puesto_actual;
+    const { fromCache, recommendations } =
+      await recommendationService.generateTrajectoryRecommendations(userData);
 
-    const cacheKey = `trajectory_recommendations_${currentRole}`;
-
-    const cachedRecommendations = trajectoryCache.get(cacheKey);
-
-    if (cachedRecommendations) {
-      return res.status(200).json({
-        success: true,
-        message: "Recomendaciones obtenidas desde caché",
-        recommendations: cachedRecommendations,
-      });
-    }
-
-    const employeeCourses = await userQueries.getUserCourses(id_persona);
-    const employeeCertifications = await userQueries.getUserCertifications(
-      id_persona
-    );
-    const employeeSkills = await userQueries.getUserSkills(id_persona);
-    const employeeProfessionalHistory =
-      await userQueries.getUserProfessionalHistory(id_persona);
-    const employeeRole = userProfile.puesto_actual;
-
-    const llm = new ChatOpenAI({
-      temperature: 0.3,
-      modelName: "gpt-4",
-      openAIApiKey: process.env.OPENAI_API_KEY,
-    });
-
-    let promptText = `
-    Como consultor de carrera profesional, genera 3 posibles trayectorias de desarrollo para un empleado con:
-    Rol: {employeeRole}
-    Cursos: {employeeCourses}
-    Certificaciones: {employeeCertifications}
-    Habilidades: {employeeSkills}
-    Historial: {employeeProfessionalHistory}
-
-    Ejemplo de trayectoria: "Desarrollo de Software: Desarrollador Junior → Desarrollador Senior → Arquitecto de Software (60 meses)"
-
-    Crea 3 trayectorias profesionales únicas basadas en este perfil. Cada trayectoria debe ser realista y adecuada 
-    a sus habilidades actuales pero con potencial de crecimiento.
-
-    Responde solo con JSON que tenga los siguientes campos: nombre, descripcion, roles_secuenciales y tiempo_estimado (debe ser un numero). Debe ser un arreglo JSON de 3 trayectorias.
-    `;
-
-    const promptTemplate = PromptTemplate.fromTemplate(promptText);
-
-    const inputParams = {
-      employeeRole,
-      employeeCourses,
-      employeeCertifications,
-      employeeSkills,
-      employeeProfessionalHistory,
-    };
-
-    const chain = RunnableSequence.from([
-      promptTemplate,
-      llm,
-      new StringOutputParser(),
-    ]);
-
-    const result = await chain.invoke(inputParams);
-    let recommendations;
-    try {
-      recommendations = JSON.parse(result);
-      trajectoryCache.set(cacheKey, recommendations);
-    } catch (error) {
-      console.error("Error al parsear la respuesta del LLM:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error al procesar las recomendaciones",
-        rawResponse: result,
-      });
-    }
     return res.status(200).json({
       success: true,
-      message: "Recomendaciones generadas exitosamente",
+      message: fromCache
+        ? "Recomendaciones obtenidas desde caché"
+        : "Recomendaciones generadas exitosamente",
       recommendations,
     });
   } catch (error) {
-    console.error("Error al generar recomendaciones:", error);
+    error("Error al generar recomendaciones:", error);
     return res.status(500).json({
       success: false,
       message: "Error al generar recomendaciones",
@@ -116,6 +45,12 @@ const createEmployeeTrayectory = async (req, res) => {
       tiempo_estimado,
       id_persona
     );
+
+    const userData = await userDataService.getUserData(id_persona, userQueries);
+    userDataService.invalidateUserCache(id_persona);
+    vectorService.invalidateUserVectorCache(id_persona);
+    recommendationService.invalidateRecommendationCaches(userData, id_persona);
+
     return res.status(201).json({
       success: true,
       message: "Trayectoria creada y asignada al empleado exitosamente",
@@ -136,6 +71,7 @@ const getUserTrayectoria = async (req, res) => {
     const userTrayectorias = await recommendationQueries.getUserTrayectoria(
       id_persona
     );
+
     return res.status(200).json({
       success: true,
       message: "Trayectorias obtenidas exitosamente",
@@ -150,9 +86,185 @@ const getUserTrayectoria = async (req, res) => {
     });
   }
 };
+const getCoursesAndCertificationsRecommendations = async (req, res) => {
+  try {
+    const { id_persona } = req.user;
+
+    const {
+      coursesCategory,
+      certificationsAbilities,
+      coursesAbilities,
+      coursesProvider,
+      certificationsProvider,
+    } = req.query;
+
+    const filters = {
+      coursesCategory,
+      certificationsAbilities,
+      coursesAbilities,
+      coursesProvider,
+      certificationsProvider,
+    };
+
+    const userData = await userDataService.getUserData(id_persona, userQueries);
+
+    const vectors = await vectorService.getOrCreateVectors(developmentQueries);
+
+    const userVector = await vectorService.getUserProfileVector(userData);
+
+    const { topCourses, topCertifications } =
+      await vectorService.findRelevantCoursesAndCerts(
+        userData,
+        userVector,
+        vectors,
+        10,
+        coursesCategory,
+        certificationsAbilities,
+        coursesAbilities,
+        coursesProvider,
+        certificationsProvider
+      );
+
+    const { fromCache, recommendations } =
+      await recommendationService.generateCourseAndCertRecommendations(
+        userData,
+        topCourses,
+        topCertifications,
+        filters
+      );
+
+    return res.status(200).json({
+      success: true,
+      message: fromCache
+        ? "Recomendaciones de cursos y certificaciones obtenidas desde caché"
+        : "Recomendaciones de cursos y certificaciones generadas exitosamente",
+      recommendations,
+    });
+  } catch (error) {
+    console.error("Error al generar recomendaciones de cursos:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al generar recomendaciones de cursos",
+      error: error.message,
+    });
+  }
+};
+
+const getFilterOptions = async (req, res) => {
+  try {
+    const uniqueCategoriesCourses =
+      await recommendationQueries.getUniqueCategoriesCourses();
+    const uniqueInstitutionsCourses =
+      await recommendationQueries.getUniqueInstitutionsCourses();
+    const uniqueInstitutionsCertifications =
+      await recommendationQueries.getUniqueInstitutionsCertifications();
+    const allSkills = await projectQueries.getAllSkills();
+    const allSkillsNames = allSkills.map((skill) => skill.nombre);
+
+    return res.status(200).json({
+      success: true,
+      message: "Opciones de filtro obtenidas exitosamente",
+      uniqueCategoriesCourses,
+      uniqueInstitutionsCourses,
+      uniqueInstitutionsCertifications,
+      allSkillsNames,
+    });
+  } catch (error) {
+    console.error("Error al obtener las opciones de filtro:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al obtener las opciones de filtro",
+      error: error.message,
+    });
+  }
+};
+
+const getRecommendedEmployeeRoles = async (req, res) => {
+  try {
+    const { id_persona } = req.user;
+    const { roleSkills, roleState } = req.query;
+
+    const filters = {
+      roleSkills,
+      roleState,
+    };
+    const availableRoles = await recommendationQueries.getAvailableRoles();
+    const rolesWithProjects = await Promise.all(
+      availableRoles.map(async (role) => {
+        const project = await recommendationQueries.getProjectByProjectId(
+          role.id_proyecto
+        );
+        return { ...role, project };
+      })
+    );
+    const filteredRoles = roleState
+      ? rolesWithProjects.filter((role) => role.project[0].estado === roleState)
+      : rolesWithProjects;
+    const rolesWithDetails = await Promise.all(
+      filteredRoles.map(async (role) => {
+        const skills = await recommendationQueries.getRoleSkills(role.id_rol);
+        const manager = await recommendationQueries.getManager(role.id_manager);
+        return {
+          ...role,
+          skills,
+          manager,
+        };
+      })
+    );
+
+    const userData = await userDataService.getUserData(id_persona, userQueries);
+    const roleVectors = await vectorService.getOrCreateRoleVectors(
+      rolesWithDetails
+    );
+    const userVector = await vectorService.getUserProfileVector(userData);
+
+    const { topRoles } = await vectorService.findRelevantRoles(
+      userVector,
+      roleVectors,
+      5,
+      roleSkills,
+      roleState
+    );
+
+    const { fromCache, recommendations } =
+      await recommendationService.generateRoleRecommendations(
+        userData,
+        topRoles,
+        filters
+      );
+    const recommendedRolesWithProjectInfo = await Promise.all(
+      recommendations.roles_recomendados.map(async (role) => {
+        const roleWithProject = rolesWithDetails.find(
+          (r) => r.id_rol === role.id_rol
+        );
+        return {
+          ...role,
+          roleWithProject,
+        };
+      })
+    );
+    return res.status(200).json({
+      success: true,
+      message: fromCache
+        ? "Recomendaciones de roles obtenidas desde caché"
+        : "Recomendaciones de roles generadas exitosamente",
+      recommendations: recommendedRolesWithProjectInfo,
+    });
+  } catch (error) {
+    console.error("Error al generar recomendaciones de roles:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error al generar recomendaciones de roles",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getRecommendations,
   createEmployeeTrayectory,
   getUserTrayectoria,
+  getCoursesAndCertificationsRecommendations,
+  getRecommendedEmployeeRoles,
+  getFilterOptions,
 };

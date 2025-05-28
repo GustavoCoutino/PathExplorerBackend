@@ -31,6 +31,7 @@ async function getAssignmentRequests(req, res) {
 async function createAssignmentRequest(req, res) {
   const {
     id_administrador,
+    id_manager,
     id_empleado,
     id_rol,
     fecha_solicitud,
@@ -42,14 +43,12 @@ async function createAssignmentRequest(req, res) {
     fecha_creacion,
     fecha_actualizacion,
   } = req.body;
-  const { id_persona } = req.user;
-  const role = await userQueries.determineUserType(id_persona);
-  const id_manager = role.roleData.id_manager;
-
+  const manager = await requestQueries.findManagerById(id_manager);
+  const real_id_manager = manager ? manager.id_manager : null;
   try {
     const newRequest = await requestQueries.createAssignmentRequest(
-      id_manager,
       id_administrador,
+      real_id_manager,
       id_empleado,
       id_rol,
       fecha_solicitud,
@@ -63,7 +62,7 @@ async function createAssignmentRequest(req, res) {
     );
     res.status(201).json({
       message: "Solicitud de asignación creada exitosamente",
-      newRequest: newRequest[0],
+      newRequest: newRequest,
     });
   } catch (error) {
     console.error("Error creando solicitud de asignación:", error);
