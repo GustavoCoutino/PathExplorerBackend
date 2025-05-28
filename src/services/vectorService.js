@@ -79,16 +79,13 @@ async function getUserProfileVector(userData) {
   }
 
   const userText = `
-    Rol: ${userData.currentRole || ""}.
+    Rol: ${userData.currentRole}.
     Habilidades: ${userData.employeeSkills
       .map((skill) => skill.nombre)
       .join(", ")}.
     Historial profesional: ${userData.employeeProfessionalHistory
-      .map((h) => h.puesto + " en " + h.empresa)
+      .map((h) => h.historial_profesional + "Logros: " + h.achievements)
       .join(", ")}.
-    Metas profesionales: ${
-      userData.userProfile.metas_profesionales || "crecimiento profesional"
-    }.
   `;
 
   const userVector = await embeddings.embedQuery(userText);
@@ -98,8 +95,18 @@ async function getUserProfileVector(userData) {
   return userVector;
 }
 
-function invalidateUserVectorCache(id_persona) {
+function invalidateUserCache(id_persona) {
+  const cacheKey = `user_data_${id_persona}`;
+  const userData = userDataCache.get(cacheKey);
+
+  userDataCache.del(cacheKey);
   vectorCache.del(`user_vector_${id_persona}`);
+
+  if (userData?.currentRole) {
+    trajectoryCache.del(`trajectory_recommendations_${userData.currentRole}`);
+  }
+
+  courseRecommendationsCache.del(`course_recommendations_${id_persona}`);
 }
 
 async function findRelevantCoursesAndCerts(
@@ -189,7 +196,7 @@ async function getOrCreateRoleVectors(roles) {
   }
 
   const roleTexts = roles.map((role) => {
-    return `Rol: ${role.titulo || role.nombre}. Descripción: ${
+    return `Rol: ${role.nombre}. Descripción: ${
       role.descripcion || ""
     }. Habilidades requeridas: ${
       role.skills ? role.skills.map((s) => s.nombre).join(", ") : ""
@@ -216,6 +223,8 @@ async function findRelevantRoles(
   topN = 5,
   roleSkills = null
 ) {
+  console.log(userVector);
+  console.log(roleVectors);
   let filteredRoles = roleVectors;
 
   if (roleSkills) {
@@ -241,12 +250,17 @@ async function findRelevantRoles(
   };
 }
 
+function invalidateUserVectorCache(id_persona) {
+  vectorCache.del(`user_vector_${id_persona}`);
+}
+
 module.exports = {
   cosineSimilarity,
   getOrCreateVectors,
   getUserProfileVector,
   findRelevantCoursesAndCerts,
-  invalidateUserVectorCache,
+  invalidateUserCache,
   getOrCreateRoleVectors,
   findRelevantRoles,
+  invalidateUserVectorCache,
 };
