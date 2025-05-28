@@ -79,7 +79,7 @@ async function getUserProfileVector(userData) {
   }
 
   const userText = `
-    Rol: ${userData.currentRole}.
+    Rol: ${userData.currentRole || ""}.
     Habilidades: ${userData.employeeSkills
       .map((skill) => skill.nombre)
       .join(", ")}.
@@ -98,18 +98,8 @@ async function getUserProfileVector(userData) {
   return userVector;
 }
 
-function invalidateUserCache(id_persona) {
-  const cacheKey = `user_data_${id_persona}`;
-  const userData = userDataCache.get(cacheKey);
-
-  userDataCache.del(cacheKey);
+function invalidateUserVectorCache(id_persona) {
   vectorCache.del(`user_vector_${id_persona}`);
-
-  if (userData?.currentRole) {
-    trajectoryCache.del(`trajectory_recommendations_${userData.currentRole}`);
-  }
-
-  courseRecommendationsCache.del(`course_recommendations_${id_persona}`);
 }
 
 async function findRelevantCoursesAndCerts(
@@ -199,7 +189,7 @@ async function getOrCreateRoleVectors(roles) {
   }
 
   const roleTexts = roles.map((role) => {
-    return `Rol: ${role.nombre}. Descripción: ${
+    return `Rol: ${role.titulo || role.nombre}. Descripción: ${
       role.descripcion || ""
     }. Habilidades requeridas: ${
       role.skills ? role.skills.map((s) => s.nombre).join(", ") : ""
@@ -252,10 +242,11 @@ async function findRelevantRoles(
 }
 
 module.exports = {
+  cosineSimilarity,
   getOrCreateVectors,
   getUserProfileVector,
   findRelevantCoursesAndCerts,
-  invalidateUserCache,
+  invalidateUserVectorCache,
   getOrCreateRoleVectors,
   findRelevantRoles,
 };

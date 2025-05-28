@@ -15,7 +15,9 @@ const recommendationRoutes = require("./src/routes/recommendationRoutes");
 const informesRoutes = require("./src/routes/informesRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
 const feedbackRoutes = require("./src/routes/feedbackRoutes");
-const { scheduleCertificationNotifications } = require("./src/certifications");
+const {
+  scheduleCertificationNotifications,
+} = require("./src/services/certifications");
 
 dotenv.config();
 
