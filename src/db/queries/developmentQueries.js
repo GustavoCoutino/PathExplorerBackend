@@ -114,6 +114,22 @@ const getUserCourseByIds = async (id_persona, id_curso) => {
   }
 };
 
+const getUserCertificationByIds = async (id_persona, id_certificacion) => {
+  try {
+    const result = await db.query(
+      `
+        SELECT * FROM desarrollo.persona_certificacion
+        WHERE id_persona = $1 AND id_certificacion = $2;
+      `,
+      [id_persona, id_certificacion]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error fetching user certification:", error);
+    throw error;
+  }
+};
+
 const editUserCourse = async (id_persona, courseData) => {
   try {
     const {
@@ -187,4 +203,5 @@ module.exports = {
   getUserCourseByIds,
   editUserCourse,
   editUserCertification,
+  getUserCertificationByIds,
 };
