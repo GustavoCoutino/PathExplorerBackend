@@ -223,8 +223,6 @@ async function findRelevantRoles(
   topN = 5,
   roleSkills = null
 ) {
-  console.log(userVector);
-  console.log(roleVectors);
   let filteredRoles = roleVectors;
 
   if (roleSkills) {
