@@ -30,3 +30,18 @@ describe("GET /api/development/all-certifications", () => {
     expect(Array.isArray(response.body)).toBe(true);
   });
 });
+
+describe("POST /api/development/create-course", () => {
+  test("should return 201 and create a new course", async () => {
+    const response = await request(app)
+      .post("/api/development/create-course")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        courseName: "New Course",
+        description: "Course Description",
+        duration: 10,
+      });
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe("Course created successfully");
+  });
+});
