@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/GustavoCoutino/PathExplorerBackend#readme",
   "dependencies": {
+    "@azure/openai": "^2.0.0",
+    "@langchain/azure-openai": "^0.0.11",
     "@langchain/core": "^0.3.51",
     "@langchain/openai": "^0.5.10",
     "@supabase/supabase-js": "^2.49.2",
