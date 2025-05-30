@@ -114,7 +114,6 @@ async function findIfEmployeeHasPendingAssignmentRequest(req, res) {
     const { id_persona } = req.user;
     const result =
       await requestQueries.getIfEmployeeHasPendingAssignmentRequest(id_persona);
-    console.log("Resultado de la consulta:", result);
     res.status(200).json({
       hasPendingRequest: result,
       message: result
