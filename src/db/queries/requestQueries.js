@@ -142,10 +142,28 @@ const findManagerById = async (id_manager) => {
   }
 };
 
+const getIfEmployeeHasPendingAssignmentRequest = async (id_empleado) => {
+  try {
+    const result = await db.query(
+      `
+            SELECT COUNT(*) AS count
+            FROM evaluacion.solicitud_asignacion
+            WHERE id_empleado = $1 AND estado = 'PENDIENTE'
+        `,
+      [id_empleado]
+    );
+    return result.rows[0].count > 0;
+  } catch (error) {
+    console.error("Error checking pending assignment requests:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   endAssignmentRequest,
   getAllAdministrators,
   findManagerById,
+  getIfEmployeeHasPendingAssignmentRequest,
 };

@@ -28,4 +28,11 @@ router.get(
   auth.authorize(["manager", "empleado"]),
   requestController.getAllAdministratorsForRequest
 );
+
+router.get(
+  "/has-pending-assignment-request",
+  auth.authenticateJWT,
+  auth.authorize("empleado"),
+  requestController.findIfEmployeeHasPendingAssignmentRequest
+);
 module.exports = router;

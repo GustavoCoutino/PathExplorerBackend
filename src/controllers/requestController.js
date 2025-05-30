@@ -109,9 +109,29 @@ async function getAllAdministratorsForRequest(req, res) {
   }
 }
 
+async function findIfEmployeeHasPendingAssignmentRequest(req, res) {
+  try {
+    const { id_persona } = req.user;
+    const result =
+      await requestQueries.getIfEmployeeHasPendingAssignmentRequest(id_persona);
+    res.status(200).json({
+      hasPendingRequest: result,
+      message: result
+        ? "El empleado tiene una solicitud pendiente"
+        : "El empleado no tiene solicitudes pendientes",
+    });
+  } catch (error) {
+    console.error("Error verificando solicitudes pendientes:", error);
+    res
+      .status(500)
+      .json({ message: "Error verificando solicitudes pendientes" });
+  }
+}
+
 module.exports = {
   getAssignmentRequests,
   createAssignmentRequest,
   updateAssignmentRequest,
   getAllAdministratorsForRequest,
+  findIfEmployeeHasPendingAssignmentRequest,
 };
