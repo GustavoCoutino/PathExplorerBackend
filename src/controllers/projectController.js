@@ -38,14 +38,6 @@ const getUserProjectAndRole = async (req, res) => {
 const getManagerProjectsWithRoles = async (req, res) => {
   try {
     const id_persona = req.user.id_persona;
-    const userTypeInfo = await userQueries.determineUserType(id_persona);
-
-    if (userTypeInfo.role !== "manager") {
-      return res.status(403).json({
-        success: false,
-        message: "Solo los managers pueden acceder a esta funcionalidad",
-      });
-    }
 
     const managerProjects = await projectQueries.getManagerProjects(id_persona);
 
@@ -220,18 +212,11 @@ const addRoleToProject = async (req, res) => {
       skills
     );
 
-    if (result) {
-      res.status(201).json({
-        success: true,
-        message: "Rol agregado al proyecto exitosamente",
-        role: result,
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: "Error al agregar rol al proyecto",
-      });
-    }
+    res.status(201).json({
+      success: true,
+      message: "Rol agregado al proyecto exitosamente",
+      role: result,
+    });
   } catch (error) {
     console.error("Error adding role to project:", error);
     res.status(500).json({
@@ -253,17 +238,11 @@ const removeRoleFromProject = async (req, res) => {
       "ASIGNACION"
     );
 
-    if (result) {
-      res.status(200).json({
-        success: true,
-        message: "Rol eliminado del proyecto exitosamente",
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: "Error al eliminar rol del proyecto",
-      });
-    }
+    res.status(200).json({
+      success: true,
+      message: "Rol eliminado del proyecto exitosamente",
+      id_rol: result.id_rol,
+    });
   } catch (error) {
     console.error("Error removing role from project:", error);
     res.status(500).json({

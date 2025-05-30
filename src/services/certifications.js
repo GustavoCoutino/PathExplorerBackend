@@ -1,7 +1,7 @@
 const schedule = require("node-schedule");
 const {
   addCertificationNotifications,
-} = require("./db/queries/notificationsQueries");
+} = require("./../db/queries/notificationsQueries");
 
 const scheduleCertificationNotifications = () => {
   schedule.scheduleJob("0 1 * * *", async () => {

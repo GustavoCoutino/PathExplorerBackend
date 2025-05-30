@@ -84,11 +84,8 @@ async function getUserProfileVector(userData) {
       .map((skill) => skill.nombre)
       .join(", ")}.
     Historial profesional: ${userData.employeeProfessionalHistory
-      .map((h) => h.puesto + " en " + h.empresa)
+      .map((h) => h.historial_profesional + "Logros: " + h.achievements)
       .join(", ")}.
-    Metas profesionales: ${
-      userData.userProfile.metas_profesionales || "crecimiento profesional"
-    }.
   `;
 
   const userVector = await embeddings.embedQuery(userText);
@@ -251,11 +248,17 @@ async function findRelevantRoles(
   };
 }
 
+function invalidateUserVectorCache(id_persona) {
+  vectorCache.del(`user_vector_${id_persona}`);
+}
+
 module.exports = {
+  cosineSimilarity,
   getOrCreateVectors,
   getUserProfileVector,
   findRelevantCoursesAndCerts,
   invalidateUserCache,
   getOrCreateRoleVectors,
   findRelevantRoles,
+  invalidateUserVectorCache,
 };

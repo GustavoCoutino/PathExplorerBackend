@@ -116,10 +116,10 @@ const updateUserProfile = async (req, res) => {
     const userId = req.user.id_persona;
     const { nombre, apellido, correo, cargo } = req.body;
 
-    if (!nombre || !apellido || !correo) {
+    if (!nombre || !apellido || !correo || !cargo) {
       return res.status(400).json({
         success: false,
-        message: "Nombre, apellido y correo son requeridos",
+        message: "Nombre, apellido, correo y cargo son requeridos",
       });
     }
 
@@ -181,10 +181,10 @@ const editUserPassword = async (req, res) => {
     const userId = req.user.id_persona;
     const { oldPassword, newPassword } = req.body;
 
-    if (!newPassword) {
+    if (!newPassword || !oldPassword) {
       return res.status(400).json({
         success: false,
-        message: "Nueva contraseña es requerida",
+        message: "Nueva contraseña y contraseña actual son requeridas",
       });
     }
 

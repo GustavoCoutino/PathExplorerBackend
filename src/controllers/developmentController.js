@@ -41,6 +41,7 @@ const addUserCourse = async (req, res) => {
         message: "El curso ya ha sido registrado para este usuario",
       });
     }
+
     const newCourse = await developmentQueries.addUserCourse(
       id_persona,
       id_curso,
@@ -69,6 +70,19 @@ const addUserCertification = async (req, res) => {
     const { id_persona } = req.user;
 
     const fecha_creacion = new Date();
+    const existingCertification =
+      await developmentQueries.getUserCertificationByIds(
+        id_persona,
+        id_certificacion
+      );
+    if (
+      existingCertification &&
+      Object.keys(existingCertification).length > 0
+    ) {
+      return res.status(400).json({
+        message: "La certificación ya ha sido registrada para este usuario",
+      });
+    }
 
     const newCertification = await developmentQueries.addUserCertification(
       id_persona,
