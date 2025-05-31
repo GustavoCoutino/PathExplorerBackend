@@ -11,7 +11,6 @@ const roleRecommendationsCache = new NodeCache({ stdTTL: 30 * 24 * 60 * 60 });
 async function generateTrajectoryRecommendations(userData) {
   const { currentRole } = userData;
   const cacheKey = `trajectory_recommendations_${currentRole}`;
-
   const cachedRecommendations = trajectoryCache.get(cacheKey);
   if (cachedRecommendations) {
     return {

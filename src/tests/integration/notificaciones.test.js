@@ -7,7 +7,7 @@ let token;
 const cleanUpNotifications = async () => {
   try {
     const query = `
-    UPDATE sistema.notificaciones SET leida = false where id_empleado=2 AND mensaje='Se te ha asignado una nueva tarea';`;
+    UPDATE sistema.notificaciones SET leida = false where id_persona=2 AND mensaje='Se te ha asignado una nueva tarea';`;
     await db.query(query);
   } catch (error) {
     console.log("Manual cleanup failed:", error.message);

@@ -6,7 +6,7 @@ const cleanupAssignmentRequest = async () => {
   try {
     await db.query(
       `DELETE FROM evaluacion.solicitud_asignacion 
-         WHERE justificacion = ? AND id_manager = ? AND id_empleado = ? AND id_rol = ?`,
+     WHERE justificacion = $1 AND id_manager = $2 AND id_empleado = $3 AND id_rol = $4`,
       ["Prueba de solicitud de asignación", 3, 14, 15]
     );
   } catch (error) {
