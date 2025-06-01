@@ -24,8 +24,36 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    const allowedOriginPatterns = [
+      "https://path-explorer-front-end-rogj.vercel.app",
+      "http://localhost:3000",
+    ];
+
+    const isAllowed = allowedOriginPatterns.some((pattern) =>
+      origin.startsWith(pattern)
+    );
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      if (process.env.NODE_ENV === "test") {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
 app.use(helmet());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
 app.use(express.json());
