@@ -44,18 +44,6 @@ describe("Administrator requests tests", () => {
     expect(response.body).toHaveProperty("hasRequests");
   });
 
-  test("should update an assignment request with an approved state", async () => {
-    const response = await request(app)
-      .patch("/api/requests/update-assignment-request")
-      .set("Authorization", `Bearer ${adminToken}`)
-      .send({
-        id_solicitud: 1,
-        estado: "APROBADO",
-        comentarios_resolucion:
-          "Solicitud de asignación finalizada exitosamente",
-      });
-  });
-
   test("should update an assignment request with a rejected state", async () => {
     const response = await request(app)
       .patch("/api/requests/update-assignment-request")
@@ -64,6 +52,23 @@ describe("Administrator requests tests", () => {
         id_solicitud: 1,
         estado: "RECHAZADA",
         comentarios_resolucion: "Solicitud de asignación rechazada",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("message");
+    expect(response.body.message).toBe(
+      "Solicitud de asignación finalizada exitosamente"
+    );
+  });
+
+  test("should update an assignment request with an accepted state", async () => {
+    const response = await request(app)
+      .patch("/api/requests/update-assignment-request")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        id_solicitud: 1,
+        estado: "APROBADA",
+        comentarios_resolucion: "Solicitud de asignación aceptada",
       });
 
     expect(response.status).toBe(200);

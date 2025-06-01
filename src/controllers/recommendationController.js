@@ -47,7 +47,7 @@ const createEmployeeTrayectory = async (req, res) => {
     );
 
     const userData = await userDataService.getUserData(id_persona, userQueries);
-    userDataService.invalidateUserCache(id_persona);
+    vectorService.invalidateUserCache(id_persona);
     vectorService.invalidateUserVectorCache(id_persona);
     recommendationService.invalidateRecommendationCaches(userData, id_persona);
 
