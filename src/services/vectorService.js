@@ -1,5 +1,7 @@
 const { OpenAIEmbeddings } = require("@langchain/openai");
 const NodeCache = require("node-cache");
+const userDataCache = new NodeCache({ stdTTL: 7 * 24 * 60 * 60 });
+const courseRecommendationsCache = new NodeCache({ stdTTL: 0 });
 
 const vectorCache = new NodeCache({ stdTTL: 0 });
 const embeddings = new OpenAIEmbeddings({

@@ -19,9 +19,9 @@ const cleanupProject = async (projectId) => {
     try {
       await db.query(
         `
-        DELETE FROM proyectos.rol_habilidad 
+        DELETE FROM recursos.rol_habilidad 
         WHERE id_rol IN (
-          SELECT id_rol FROM proyectos.rol WHERE id_proyecto = ?
+          SELECT id_rol FROM recursos.rol WHERE id_proyecto = $1
         )
       `,
         [projectId]
@@ -29,21 +29,14 @@ const cleanupProject = async (projectId) => {
 
       await db.query(
         `
-        DELETE FROM proyectos.rol WHERE id_proyecto = ?
+        DELETE FROM recursos.rol WHERE id_proyecto = $1
       `,
         [projectId]
       );
 
       await db.query(
         `
-        DELETE FROM proyectos.proyecto_persona WHERE id_proyecto = ?
-      `,
-        [projectId]
-      );
-
-      await db.query(
-        `
-        DELETE FROM proyectos.proyecto WHERE id_proyecto = ?
+        DELETE FROM recursos.proyecto WHERE id_proyecto = $1
       `,
         [projectId]
       );
@@ -58,21 +51,14 @@ const cleanupRole = async (roleId) => {
     try {
       await db.query(
         `
-        DELETE FROM proyectos.rol_habilidad WHERE id_rol = ?
+        DELETE FROM recursos.rol_habilidad WHERE id_rol = $1
       `,
         [roleId]
       );
 
       await db.query(
         `
-        DELETE FROM proyectos.proyecto_persona WHERE id_rol = ?
-      `,
-        [roleId]
-      );
-
-      await db.query(
-        `
-        DELETE FROM proyectos.rol WHERE id_rol = ?
+        DELETE FROM recursos.rol WHERE id_rol = $1;
       `,
         [roleId]
       );
