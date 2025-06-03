@@ -88,7 +88,9 @@ const getUserProfile = async (id_persona) => {
 };
 
 const editUserProfile = async (id_persona, profileData) => {
+  const client = await db.connect();
   try {
+    await client.query("BEGIN");
     const { nombre, apellido, correo, cargo } = profileData;
 
     const personaResult = await db.query(
@@ -111,6 +113,8 @@ const editUserProfile = async (id_persona, profileData) => {
       [cargo, id_persona]
     );
 
+    await client.query("COMMIT");
+
     return {
       persona: personaResult.rows[0],
       perfil: perfilResult.rows[0],
@@ -118,6 +122,107 @@ const editUserProfile = async (id_persona, profileData) => {
     };
   } catch (error) {
     console.error("Error al actualizar el perfil del usuario:", error);
+    throw error;
+  }
+};
+
+const createUser = async (userData) => {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await db.query(
+      `
+      INSERT INTO personas.persona (nombre, apellido, email, password_hash, fecha_contratacion)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id_persona
+    `,
+      [
+        userData.nombre,
+        userData.apellido,
+        userData.email,
+        userData.password_hash,
+        userData.fecha_contratacion,
+      ]
+    );
+
+    const id_persona = result.rows[0].id_persona;
+
+    await db.query(
+      `
+      INSERT INTO personas.perfil (id_persona, puesto_actual, antiguedad, historial_profesional)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id_perfil
+    `,
+      [
+        id_persona,
+        userData.puesto_actual,
+        userData.antiguedad,
+        userData.historial_profesional,
+      ]
+    );
+    return { id_persona, message: "Usuario creado con éxito" };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
+
+const createEmpleado = async (userData) => {
+  try {
+    await db.query(
+      `
+      INSERT INTO personas.empleado (id_persona, estado, porcentaje_disponibilidad)
+      VALUES ($1, $2, $3);
+    `,
+      [userData.id_persona, userData.estado, userData.porcentaje_disponibilidad]
+    );
+
+    return {
+      id_persona: userData.id_persona,
+      message: "Empleado creado con éxito",
+    };
+  } catch (error) {
+    console.error("Error creating empleado:", error);
+    throw error;
+  }
+};
+
+const createManager = async (userData) => {
+  try {
+    await db.query(
+      `
+      INSERT INTO personas.manager (id_persona, area_responsabilidad, nivel_autorizacion)
+      VALUES ($1, $2, 5)
+    `,
+      [userData.id_persona, userData.area_responsabilidad]
+    );
+
+    return {
+      id_persona: userData.id_persona,
+      message: "Manager creado con éxito",
+    };
+  } catch (error) {
+    console.error("Error creating manager:", error);
+    throw error;
+  }
+};
+
+const createAdministrador = async (userData) => {
+  try {
+    await db.query(
+      `
+      INSERT INTO personas.administrador (id_persona, departamento, nivel_acceso)
+      VALUES ($1, $2, 5)
+    `,
+      [userData.id_persona, userData.departamento]
+    );
+
+    return {
+      id_persona: userData.id_persona,
+      message: "Administrador creado con éxito",
+    };
+  } catch (error) {
+    console.error("Error creating administrador:", error);
     throw error;
   }
 };
@@ -276,6 +381,10 @@ module.exports = {
   findUserById,
   determineUserType,
   getUserProfile,
+  createUser,
+  createEmpleado,
+  createManager,
+  createAdministrador,
   editUserProfile,
   editUserPassword,
   getUserCertifications,

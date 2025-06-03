@@ -72,6 +72,115 @@ const login = async (req, res) => {
   }
 };
 
+const signup = async (req, res) => {
+  try {
+    const {
+      nombre,
+      apellido,
+      email,
+      password_hash,
+      fecha_contratacion,
+      puesto_actual,
+      antiguedad,
+      historial_profesional,
+      estado,
+      porcentaje_disponibilidad,
+      area_responsabilidad,
+      departamento,
+      rolElegido,
+    } = req.body;
+    if (
+      !nombre ||
+      !apellido ||
+      !email ||
+      !password_hash ||
+      !fecha_contratacion ||
+      !puesto_actual ||
+      !antiguedad ||
+      !historial_profesional
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Todos los campos son requeridos",
+      });
+    }
+    let existingUser = await userQueries.findUserByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "El usuario ya existe",
+      });
+    }
+    let userData = {
+      nombre,
+      apellido,
+      email,
+      password_hash,
+      fecha_contratacion,
+      puesto_actual,
+      antiguedad,
+      historial_profesional,
+      estado,
+      porcentaje_disponibilidad,
+      area_responsabilidad,
+      departamento,
+    };
+    const newUser = await userQueries.createUser(userData);
+    if (!newUser) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al crear el usuario",
+      });
+    }
+    userData.id_persona = newUser.id_persona;
+
+    if (rolElegido === "administrador") {
+      await userQueries.createAdministrador(userData);
+    } else if (rolElegido === "empleado") {
+      await userQueries.createEmpleado(userData);
+    } else if (rolElegido === "manager") {
+      await userQueries.createManager(userData);
+    }
+    existingUser = await userQueries.findUserByEmail(email);
+    const userTypeInfo = await userQueries.determineUserType(
+      existingUser.id_persona
+    );
+    const profileInfo = await userQueries.getUserProfile(
+      existingUser.id_persona
+    );
+
+    const userWithRole = {
+      id_persona: existingUser.id_persona,
+      email: existingUser.email,
+      role: userTypeInfo.role,
+    };
+
+    const token = auth.generateToken(userWithRole);
+
+    return res.status(200).json({
+      success: true,
+      message: "Signin successful",
+      token,
+      user: {
+        id_persona: existingUser.id_persona,
+        nombre: existingUser.nombre,
+        apellido: existingUser.apellido,
+        email: existingUser.email,
+        fecha_contratacion: existingUser.fecha_contratacion,
+        role: userTypeInfo.role,
+        roleData: userTypeInfo.roleData,
+        profile: profileInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Signin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.id_persona;
@@ -397,6 +506,7 @@ const getUserGoalsAndTrajectory = async (req, res) => {
 
 module.exports = {
   login,
+  signup,
   getUserProfile,
   updateUserProfile,
   editUserPassword,
