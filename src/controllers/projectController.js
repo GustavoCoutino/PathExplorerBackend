@@ -1,6 +1,7 @@
 const projectQueries = require("../db/queries/projectQueries");
 const userQueries = require("../db/queries/userQueries");
 const notificationsQueries = require("../db/queries/notificationsQueries");
+const bancaQueries = require("../db/queries/bancaQueries");
 
 const getUserProjectAndRole = async (req, res) => {
   const id_empleado = req.body.id_empleado;
@@ -130,9 +131,15 @@ const getBestCandidatesForRole = async (req, res) => {
   try {
     const id_rol = req.body.id_rol;
     const candidates = await projectQueries.getBestCandidatesForRole(id_rol);
+    candidates.forEach((candidate) => {
+      candidate.porcentaje_disponibilidad =
+        Math.round(candidate.porcentaje_disponibilidad) + "%";
+      candidate.porcentaje_match = Math.round(candidate.porcentaje_match) + "%";
+    });
+
     res.status(200).json({
       success: true,
-      candidates,
+      candidates: candidates,
     });
   } catch (error) {
     console.error("Error fetching best candidates for role:", error);

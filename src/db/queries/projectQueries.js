@@ -131,11 +131,20 @@ const getBestCandidatesForRole = async (id_rol) => {
   try {
     const result = await db.query(
       `
-      SELECT id_empleado, nombre_completo, puesto_actual, porcentaje_disponibilidad, porcentaje_match
-      FROM recursos.vw_candidatos_para_roles
-      WHERE id_rol = $1
-      ORDER BY porcentaje_match DESC, porcentaje_disponibilidad DESC  
-      LIMIT 5;
+      SELECT
+    m.id_empleado,
+    SUM(COALESCE(m.porcentaje_cumplimiento, 0) * rh.importancia) / SUM(rh.importancia) AS porcentaje_match,
+    e.porcentaje_disponibilidad,
+    CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
+    pf.puesto_actual
+FROM vw_match_habilidades_rol_empleado m
+JOIN recursos.rol_habilidad rh ON m.id_rol = rh.id_rol AND m.id_habilidad = rh.id_habilidad
+JOIN personas.empleado e ON m.id_empleado = e.id_empleado
+JOIN personas.persona p ON e.id_persona = p.id_persona
+JOIN personas.perfil pf ON p.id_persona = pf.id_persona
+WHERE m.id_rol = $1
+GROUP BY m.id_rol, m.id_empleado, e.porcentaje_disponibilidad, p.nombre, p.apellido, pf.puesto_actual
+ORDER BY porcentaje_match DESC;
       `,
       [id_rol]
     );

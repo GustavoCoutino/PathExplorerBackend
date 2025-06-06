@@ -160,7 +160,7 @@ const getProyectAndTeam = async (req, res) => {
           };
         }
         return {
-          id_proyecto: proyecto.id_proyecto, 
+          id_proyecto: proyecto.id_proyecto,
           proyecto: proyecto.nombre,
           integrantes: {
             id_empleado: integrantes[0].id_empleado,
@@ -178,10 +178,22 @@ const getProyectAndTeam = async (req, res) => {
   }
 };
 
+const deleteEvaluacion = async (req, res) => {
+  const { id_evaluacion } = req.params;
+  try {
+    await feedbackQueries.deleteEvaluacion(id_evaluacion);
+    res.status(200).json({ message: "Evaluación eliminada exitosamente" });
+  } catch (error) {
+    console.error("Error eliminando evaluación:", error);
+    res.status(500).json({ message: "Error eliminando evaluación" });
+  }
+};
+
 module.exports = {
   getEvaluacionesManager,
   getEvaluacionesEmpleado,
   getEvaluacionesAdministrador,
   createEvaluacion,
   getProyectAndTeam,
+  deleteEvaluacion,
 };

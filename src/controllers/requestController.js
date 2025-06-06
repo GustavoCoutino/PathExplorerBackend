@@ -28,7 +28,7 @@ async function getAssignmentRequests(req, res) {
   }
 }
 
-async function createAssignmentRequest(req, res) {
+async function createAssignmentRequestEmployee(req, res) {
   const {
     id_administrador,
     id_manager,
@@ -45,11 +45,59 @@ async function createAssignmentRequest(req, res) {
   } = req.body;
   const manager = await requestQueries.findManagerById(id_manager);
   const real_id_manager = manager ? manager.id_manager : null;
+  const real_id_empleado = await userQueries.findEmpleadoIdByPersonaId(
+    id_empleado
+  );
   try {
     const newRequest = await requestQueries.createAssignmentRequest(
       id_administrador,
       real_id_manager,
-      id_empleado,
+      real_id_empleado,
+      id_rol,
+      fecha_solicitud,
+      justificacion,
+      urgencia,
+      estado,
+      comentarios_resolucion,
+      fecha_resolucion,
+      fecha_creacion,
+      fecha_actualizacion
+    );
+    res.status(201).json({
+      message: "Solicitud de asignación creada exitosamente",
+      newRequest: newRequest,
+    });
+  } catch (error) {
+    console.error("Error creando solicitud de asignación:", error);
+    res.status(500).json({ message: "Error creando solicitud de asignación" });
+  }
+}
+
+async function createAssignmentRequestManager(req, res) {
+  const {
+    id_administrador,
+    id_empleado,
+    id_rol,
+    fecha_solicitud,
+    justificacion,
+    urgencia,
+    estado,
+    comentarios_resolucion,
+    fecha_resolucion,
+    fecha_creacion,
+    fecha_actualizacion,
+  } = req.body;
+  const { id_persona } = req.user;
+  const manager = await requestQueries.findManagerById(id_persona);
+  const id_manager = manager ? manager.id_manager : null;
+  const real_id_empleado = await userQueries.findEmpleadoIdByPersonaId(
+    id_empleado
+  );
+  try {
+    const newRequest = await requestQueries.createAssignmentRequest(
+      id_administrador,
+      id_manager,
+      real_id_empleado,
       id_rol,
       fecha_solicitud,
       justificacion,
@@ -130,7 +178,8 @@ async function findIfEmployeeHasPendingAssignmentRequest(req, res) {
 
 module.exports = {
   getAssignmentRequests,
-  createAssignmentRequest,
+  createAssignmentRequestEmployee,
+  createAssignmentRequestManager,
   updateAssignmentRequest,
   getAllAdministratorsForRequest,
   findIfEmployeeHasPendingAssignmentRequest,

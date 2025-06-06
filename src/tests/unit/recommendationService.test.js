@@ -267,8 +267,9 @@ describe("recommendationService", () => {
 
       expect(ChatOpenAI).toHaveBeenCalledWith({
         temperature: 0.3,
-        modelName: "gpt-4",
+        modelName: "gpt-3.5-turbo",
         openAIApiKey: "test-api-key",
+        timeout: 30000,
       });
     });
   });
