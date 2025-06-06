@@ -34,4 +34,11 @@ router.get(
   auth.authorize(["manager"]),
   feedbackController.getProyectAndTeam
 );
+
+router.delete(
+  "/borrar/:id_evaluacion",
+  auth.authenticateJWT,
+  auth.authorize(["manager"]),
+  feedbackController.deleteEvaluacion
+);
 module.exports = router;

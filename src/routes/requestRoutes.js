@@ -10,10 +10,17 @@ router.get(
   requestController.getAssignmentRequests
 );
 router.post(
-  "/create-assignment-request",
+  "/create-assignment-request-employee",
   auth.authenticateJWT,
-  auth.authorize(["manager", "empleado"]),
-  requestController.createAssignmentRequest
+  auth.authorize("empleado"),
+  requestController.createAssignmentRequestEmployee
+);
+
+router.post(
+  "/create-assignment-request-manager",
+  auth.authenticateJWT,
+  auth.authorize("manager"),
+  requestController.createAssignmentRequestManager
 );
 router.patch(
   "/update-assignment-request",

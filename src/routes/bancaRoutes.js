@@ -6,7 +6,7 @@ const auth = require("../middleware/auth");
 router.get(
   "/empleados",
   auth.authenticateJWT,
-  auth.authorize("administrador"),
+  auth.authorize(["manager", "administrador"]),
   bancaController.managerGetAllEmployees
 );
 

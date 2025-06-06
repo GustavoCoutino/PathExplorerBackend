@@ -21,8 +21,9 @@ async function generateTrajectoryRecommendations(userData) {
 
   const llm = new ChatOpenAI({
     temperature: 0.3,
-    modelName: "gpt-4",
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI_API_KEY,
+    timeout: 30 * 1000,
   });
 
   let promptText = `
@@ -99,7 +100,7 @@ async function generateCourseAndCertRecommendations(
 
   const llm = new ChatOpenAI({
     temperature: 0.3,
-    modelName: "gpt-4",
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI_API_KEY,
   });
 
@@ -181,7 +182,7 @@ async function generateRoleRecommendations(userData, topRoles, filters = {}) {
 
   const llm = new ChatOpenAI({
     temperature: 0.3,
-    modelName: "gpt-4",
+    modelName: "gpt-3.5-turbo",
     openAIApiKey: process.env.OPENAI_API_KEY,
   });
 

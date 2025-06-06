@@ -26,6 +26,19 @@ const findUserById = async (id_persona) => {
   }
 };
 
+const findEmpleadoIdByPersonaId = async (id_persona) => {
+  try {
+    const result = await db.query(
+      "SELECT id_empleado FROM personas.empleado WHERE id_persona = $1",
+      [id_persona]
+    );
+    return result.rows[0] ? result.rows[0].id_empleado : null;
+  } catch (error) {
+    console.error("Error finding empleado id by persona id:", error);
+    throw error;
+  }
+};
+
 const determineUserType = async (id_persona) => {
   try {
     const adminResult = await db.query(
@@ -274,6 +287,7 @@ const getUserProfessionalGoals = async (id_persona) => {
 module.exports = {
   findUserByEmail,
   findUserById,
+  findEmpleadoIdByPersonaId,
   determineUserType,
   getUserProfile,
   editUserProfile,

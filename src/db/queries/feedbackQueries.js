@@ -78,9 +78,25 @@ const createEvaluacion = async (
   }
 };
 
+const deleteEvaluacion = async (id_evaluacion) => {
+  try {
+    const result = await db.query(
+      `
+            DELETE FROM evaluacion.evaluacion_desempeno WHERE id_evaluacion = $1 RETURNING *;
+        `,
+      [id_evaluacion]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error deleting evaluation:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getEvaluacionesManager,
   getEvaluacionesEmpleado,
   getEvaluacionesTodas,
   createEvaluacion,
+  deleteEvaluacion,
 };
