@@ -22,7 +22,7 @@ const getRecommendations = async (req, res) => {
       recommendations,
     });
   } catch (error) {
-    error("Error al generar recomendaciones:", error);
+    console.error("Error al generar recomendaciones:", error);
     return res.status(500).json({
       success: false,
       message: "Error al generar recomendaciones",

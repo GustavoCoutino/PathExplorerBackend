@@ -103,11 +103,10 @@ describe("Manager requests tests", () => {
 
   test("should create an assignment request", async () => {
     const response = await request(app)
-      .post("/api/requests/create-assignment-request")
+      .post("/api/requests/create-assignment-request-manager")
       .set("Authorization", `Bearer ${managerToken}`)
       .send({
         id_administrador: 3,
-        id_manager: 43,
         id_empleado: 14,
         id_rol: 15,
         fecha_solicitud: "2025-04-23T00:00:00.000Z",

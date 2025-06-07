@@ -3,13 +3,10 @@ jest.mock("node-cache");
 jest.mock("@langchain/core/output_parsers");
 jest.mock("@langchain/core/runnables");
 const { ChatOpenAI } = require("@langchain/openai");
-const { StringOutputParser } = require("@langchain/core/output_parsers");
+const { JsonOutputParser } = require("@langchain/core/output_parsers");
 const { PromptTemplate } = require("@langchain/core/prompts");
 const { RunnableSequence } = require("@langchain/core/runnables");
 const NodeCache = require("node-cache");
-const mockEmbeddings = {
-  embedQuery: jest.fn(),
-};
 
 const mockLLM = {
   invoke: jest.fn(),
@@ -34,7 +31,7 @@ const mockCache = {
 };
 
 ChatOpenAI.mockImplementation(() => mockLLM);
-StringOutputParser.mockImplementation(() => mockOutputParser);
+JsonOutputParser.mockImplementation(() => mockOutputParser);
 PromptTemplate.fromTemplate = jest.fn(() => mockPromptTemplate);
 RunnableSequence.from = jest.fn(() => mockChain);
 NodeCache.mockImplementation(() => mockCache);
@@ -225,9 +222,7 @@ describe("recommendationService", () => {
 
     it("should generate new recommendations when cache is empty", async () => {
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(
-        JSON.stringify(mockTrajectoryResponse)
-      );
+      mockChain.invoke.mockResolvedValue(mockTrajectoryResponse);
 
       const result = await generateTrajectoryRecommendations(mockUserData);
 
@@ -248,20 +243,9 @@ describe("recommendationService", () => {
       });
     });
 
-    it("should handle JSON parsing errors", async () => {
-      mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue("invalid json");
-
-      await expect(
-        generateTrajectoryRecommendations(mockUserData)
-      ).rejects.toThrow("Error processing recommendations");
-    });
-
     it("should initialize ChatOpenAI with correct parameters", async () => {
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(
-        JSON.stringify(mockTrajectoryResponse)
-      );
+      mockChain.invoke.mockResolvedValue(mockTrajectoryResponse);
 
       await generateTrajectoryRecommendations(mockUserData);
 
@@ -324,7 +308,7 @@ describe("recommendationService", () => {
 
     it("should generate new recommendations when cache is empty", async () => {
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(JSON.stringify(mockCourseResponse));
+      mockChain.invoke.mockResolvedValue(mockCourseResponse);
 
       const result = await generateCourseAndCertRecommendations(
         mockUserData,
@@ -348,7 +332,7 @@ describe("recommendationService", () => {
         certificationsAbilities: "MachineLearning",
       };
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(JSON.stringify(mockCourseResponse));
+      mockChain.invoke.mockResolvedValue(mockCourseResponse);
 
       await generateCourseAndCertRecommendations(
         mockUserData,
@@ -373,7 +357,7 @@ describe("recommendationService", () => {
       };
 
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(JSON.stringify(mockCourseResponse));
+      mockChain.invoke.mockResolvedValue(mockCourseResponse);
 
       await generateCourseAndCertRecommendations(
         userDataWithLongArrays,
@@ -388,19 +372,6 @@ describe("recommendationService", () => {
       expect(JSON.parse(invokeCall.employeeProfessionalHistory)).toHaveLength(
         3
       );
-    });
-
-    it("should handle JSON parsing errors", async () => {
-      mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue("invalid json");
-
-      await expect(
-        generateCourseAndCertRecommendations(
-          mockUserData,
-          mockTopCourses,
-          mockTopCertifications
-        )
-      ).rejects.toThrow("Error processing course recommendations");
     });
   });
 
@@ -772,7 +743,7 @@ describe("recommendationService", () => {
 
     it("should generate new recommendations when cache is empty", async () => {
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(JSON.stringify(mockRoleResponse));
+      mockChain.invoke.mockResolvedValue(mockRoleResponse);
 
       const result = await generateRoleRecommendations(
         mockUserData,
@@ -803,7 +774,7 @@ describe("recommendationService", () => {
         certificationSkills: "MachineLearning",
       };
       mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue(JSON.stringify(mockRoleResponse));
+      mockChain.invoke.mockResolvedValue(mockRoleResponse);
 
       await generateRoleRecommendations(mockUserData, mockTopRoles, filters);
 
@@ -811,15 +782,6 @@ describe("recommendationService", () => {
         "courseSkills=Javascript&certificationSkills=MachineLearning"
       ).toString("base64")}`;
       expect(mockCache.get).toHaveBeenCalledWith(expectedCacheKey);
-    });
-
-    it("should handle JSON parsing errors", async () => {
-      mockCache.get.mockReturnValue(undefined);
-      mockChain.invoke.mockResolvedValue("invalid json");
-
-      await expect(
-        generateRoleRecommendations(mockUserData, mockTopRoles)
-      ).rejects.toThrow("Error processing role recommendations");
     });
   });
 

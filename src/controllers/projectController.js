@@ -1,7 +1,6 @@
 const projectQueries = require("../db/queries/projectQueries");
 const userQueries = require("../db/queries/userQueries");
 const notificationsQueries = require("../db/queries/notificationsQueries");
-const bancaQueries = require("../db/queries/bancaQueries");
 
 const getUserProjectAndRole = async (req, res) => {
   const id_empleado = req.body.id_empleado;

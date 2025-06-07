@@ -1,5 +1,5 @@
 const { ChatOpenAI } = require("@langchain/openai");
-const { StringOutputParser } = require("@langchain/core/output_parsers");
+const { JsonOutputParser } = require("@langchain/core/output_parsers");
 const { PromptTemplate } = require("@langchain/core/prompts");
 const { RunnableSequence } = require("@langchain/core/runnables");
 const NodeCache = require("node-cache");
@@ -55,18 +55,17 @@ async function generateTrajectoryRecommendations(userData) {
   const chain = RunnableSequence.from([
     promptTemplate,
     llm,
-    new StringOutputParser(),
+    new JsonOutputParser(),
   ]);
 
   const result = await chain.invoke(inputParams);
 
   try {
-    const recommendations = JSON.parse(result);
-    trajectoryCache.set(cacheKey, recommendations);
+    trajectoryCache.set(cacheKey, result);
 
     return {
       fromCache: false,
-      recommendations,
+      recommendations: result,
     };
   } catch (error) {
     console.error("Error parsing LLM response:", error);
@@ -120,6 +119,8 @@ async function generateCourseAndCertRecommendations(
 
     Responde solo con JSON que tenga los siguientes campos: cursos_recomendados y certificaciones_recomendadas. Cada uno debe ser un arreglo con 3 objetos, donde cada objeto contenga id, nombre, institucion, descripcion, y razon_recomendacion.
 
+    Responde ÚNICAMENTE con JSON válido. No incluyas texto antes o después del JSON.
+
     En caso de que no haya suficientes cursos o certificaciones, no es necesario incluir los 3 de cada uno, es posible regresar un arreglo vacio.
   `;
 
@@ -142,18 +143,17 @@ async function generateCourseAndCertRecommendations(
   const chain = RunnableSequence.from([
     promptTemplate,
     llm,
-    new StringOutputParser(),
+    new JsonOutputParser(),
   ]);
 
   const result = await chain.invoke(inputParams);
 
   try {
-    const recommendations = JSON.parse(result);
-    courseRecommendationsCache.set(cacheKey, recommendations);
+    courseRecommendationsCache.set(cacheKey, result);
 
     return {
       fromCache: false,
-      recommendations,
+      recommendations: result,
     };
   } catch (error) {
     console.error("Error parsing LLM response:", error);
@@ -220,18 +220,17 @@ async function generateRoleRecommendations(userData, topRoles, filters = {}) {
   const chain = RunnableSequence.from([
     promptTemplate,
     llm,
-    new StringOutputParser(),
+    new JsonOutputParser(),
   ]);
 
   const result = await chain.invoke(inputParams);
 
   try {
-    const recommendations = JSON.parse(result);
-    roleRecommendationsCache.set(cacheKey, recommendations);
+    roleRecommendationsCache.set(cacheKey, result);
 
     return {
       fromCache: false,
-      recommendations,
+      recommendations: result,
     };
   } catch (error) {
     console.error("Error parsing LLM response:", error);
