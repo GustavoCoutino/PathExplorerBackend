@@ -132,18 +132,23 @@ const getBestCandidatesForRole = async (id_rol) => {
     const result = await db.query(
       `
       SELECT
-    m.id_empleado,
-    SUM(COALESCE(m.porcentaje_cumplimiento, 0) * rh.importancia) / SUM(rh.importancia) AS porcentaje_match,
+    e.id_empleado,
+    SUM(COALESCE(
+        CASE
+            WHEN ph.nivel_demostrado >= rh.nivel_minimo_requerido THEN 100
+            ELSE (ph.nivel_demostrado * 100.0 / rh.nivel_minimo_requerido)::NUMERIC(5,2)
+        END, 0
+    ) * rh.importancia) / SUM(rh.importancia) AS porcentaje_match,
     e.porcentaje_disponibilidad,
     CONCAT(p.nombre, ' ', p.apellido) AS nombre_completo,
     pf.puesto_actual
-FROM vw_match_habilidades_rol_empleado m
-JOIN recursos.rol_habilidad rh ON m.id_rol = rh.id_rol AND m.id_habilidad = rh.id_habilidad
-JOIN personas.empleado e ON m.id_empleado = e.id_empleado
+FROM recursos.rol_habilidad rh
+CROSS JOIN personas.empleado e
+LEFT JOIN personas.persona_habilidad ph ON ph.id_persona = e.id_persona AND ph.id_habilidad = rh.id_habilidad
 JOIN personas.persona p ON e.id_persona = p.id_persona
 JOIN personas.perfil pf ON p.id_persona = pf.id_persona
-WHERE m.id_rol = $1
-GROUP BY m.id_rol, m.id_empleado, e.porcentaje_disponibilidad, p.nombre, p.apellido, pf.puesto_actual
+WHERE rh.id_rol = $1
+GROUP BY e.id_empleado, e.porcentaje_disponibilidad, p.nombre, p.apellido, pf.puesto_actual
 ORDER BY porcentaje_match DESC;
       `,
       [id_rol]
