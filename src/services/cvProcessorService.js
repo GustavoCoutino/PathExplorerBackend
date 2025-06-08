@@ -9,15 +9,12 @@ const sharp = require('sharp');
 
 class CVProcessor {
     constructor() {
-        // Configuración de Azure OpenAI
-        this.llm = new ChatOpenAI({
-            azureOpenAIEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
-            azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
-            azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY,
-            azureOpenAIApiVersion: "2023-07-01-preview",
-            temperature: 0.0,
-            modelName: "gpt-4o"
-        });
+        // Configurar ambas APIs
+        this.azureLLM = null;
+        this.openaiLLM = null;
+        this.currentProvider = 'azure'; // Empezar con Azure por defecto
+
+        this.initializeModels();
 
         this.prompt = ChatPromptTemplate.fromMessages([
             ["system", `Eres un extractor de CV mundial que debe PRESERVAR TODA la información y SUMAR valor al candidato.
@@ -136,6 +133,155 @@ RECORDATORIOS CRÍTICOS:
 
 RESPONDE SOLO CON JSON VÁLIDO - NO agregues texto adicional.`]
         ]);
+    }
+
+    initializeModels() {
+        try {
+            // Configurar Azure OpenAI si las credenciales están disponibles
+            if (process.env.AZURE_OPENAI_ENDPOINT &&
+                process.env.AZURE_OPENAI_API_KEY &&
+                process.env.AZURE_OPENAI_DEPLOYMENT_NAME) {
+
+                console.log("🔵 Configurando Azure OpenAI...");
+                this.azureLLM = new ChatOpenAI({
+                    azureOpenAIEndpoint: process.env.AZURE_OPENAI_ENDPOINT,
+                    azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME,
+                    azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY,
+                    azureOpenAIApiVersion: "2023-07-01-preview",
+                    temperature: 0.0,
+                    modelName: "gpt-4o"
+                });
+            }
+
+            // Configurar OpenAI regular si la API key está disponible
+            if (process.env.OPENAI_API_KEY) {
+                console.log("🟢 Configurando OpenAI regular...");
+                this.openaiLLM = new ChatOpenAI({
+                    openAIApiKey: process.env.OPENAI_API_KEY,
+                    modelName: "gpt-4o", // o "gpt-4-turbo" según tu preferencia
+                    temperature: 0.0,
+                });
+            }
+
+            // Determinar el proveedor inicial
+            if (this.azureLLM) {
+                this.currentProvider = 'azure';
+                console.log("🔵 Usando Azure OpenAI como proveedor principal");
+            } else if (this.openaiLLM) {
+                this.currentProvider = 'openai';
+                console.log("🟢 Usando OpenAI regular como proveedor principal");
+            } else {
+                throw new Error("❌ No se encontraron credenciales válidas para ningún proveedor de AI");
+            }
+
+        } catch (error) {
+            console.error("❌ Error inicializando modelos:", error);
+            throw error;
+        }
+    }
+
+    getCurrentLLM() {
+        if (this.currentProvider === 'azure' && this.azureLLM) {
+            return this.azureLLM;
+        } else if (this.currentProvider === 'openai' && this.openaiLLM) {
+            return this.openaiLLM;
+        }
+        throw new Error("No hay ningún modelo LLM disponible");
+    }
+
+    async switchProvider() {
+        console.log(`🔄 Cambiando de proveedor: ${this.currentProvider} -> `, end='');
+
+        if (this.currentProvider === 'azure' && this.openaiLLM) {
+            this.currentProvider = 'openai';
+            console.log("🟢 OpenAI regular");
+            return true;
+        } else if (this.currentProvider === 'openai' && this.azureLLM) {
+            this.currentProvider = 'azure';
+            console.log("🔵 Azure OpenAI");
+            return true;
+        }
+
+        console.log("❌ No hay proveedor alternativo disponible");
+        return false;
+    }
+
+    isQuotaError(error) {
+        const errorMessage = error.message?.toLowerCase() || '';
+        const errorResponse = error.response?.data?.error?.message?.toLowerCase() || '';
+
+        // Patrones comunes de errores de cuota/créditos
+        const quotaPatterns = [
+            'quota exceeded',
+            'rate limit exceeded',
+            'insufficient credits',
+            'billing quota exceeded',
+            'usage limit exceeded',
+            'quota_exceeded',
+            'rate_limit_exceeded',
+            'insufficient_quota',
+            'no credits',
+            'out of credits',
+            '429', // Too Many Requests
+            'quotaexceeded',
+            'billingquotaexceeded'
+        ];
+
+        return quotaPatterns.some(pattern =>
+            errorMessage.includes(pattern) || errorResponse.includes(pattern)
+        );
+    }
+
+    async makeAIRequest(input) {
+        let attempts = 0;
+        const maxAttempts = 2; // Intentar con ambos proveedores
+
+        while (attempts < maxAttempts) {
+            try {
+                console.log(`🤖 Intento ${attempts + 1} con proveedor: ${this.currentProvider}`);
+
+                const currentLLM = this.getCurrentLLM();
+                const chain = RunnableSequence.from([
+                    this.prompt,
+                    currentLLM,
+                    new StringOutputParser()
+                ]);
+
+                const result = await chain.invoke(input);
+                console.log(`✅ Éxito con ${this.currentProvider}`);
+                return result;
+
+            } catch (error) {
+                console.error(`❌ Error con ${this.currentProvider}:`, error.message);
+
+                // Si es un error de cuota/créditos, intentar cambiar de proveedor
+                if (this.isQuotaError(error)) {
+                    console.log("💳 Detectado error de cuota/créditos");
+
+                    const switched = await this.switchProvider();
+                    if (switched) {
+                        attempts++;
+                        console.log(`🔄 Reintentando con ${this.currentProvider}...`);
+                        continue;
+                    } else {
+                        throw new Error("❌ Sin créditos en ambos proveedores de AI");
+                    }
+                } else {
+                    // Si no es error de cuota, reintentar una vez más con el otro proveedor
+                    if (attempts === 0) {
+                        const switched = await this.switchProvider();
+                        if (switched) {
+                            attempts++;
+                            console.log(`🔄 Reintentando con ${this.currentProvider} por error técnico...`);
+                            continue;
+                        }
+                    }
+                    throw error;
+                }
+            }
+        }
+
+        throw new Error("❌ Falló con ambos proveedores de AI");
     }
 
     async extractTextFromPDF(buffer) {
@@ -384,17 +530,11 @@ RESPONDE SOLO CON JSON VÁLIDO - NO agregues texto adicional.`]
 
             console.log(`📄 Texto extraído: ${processedText.length} caracteres`);
 
-            // Crear la cadena de procesamiento
-            const chain = RunnableSequence.from([
-                this.prompt,
-                this.llm,
-                new StringOutputParser()
-            ]);
-
             const maxText = processedText.substring(0, 25000);
             console.log(`🤖 Enviando ${maxText.length} caracteres a AI...`);
 
-            const result = await chain.invoke({
+            // Usar el nuevo método con fallback automático
+            const result = await this.makeAIRequest({
                 cv_content: maxText
             });
 
@@ -443,8 +583,9 @@ RESPONDE SOLO CON JSON VÁLIDO - NO agregues texto adicional.`]
             cvData.metadata.fecha_procesamiento = new Date().toISOString();
             cvData.metadata.confianza_extraccion = this.calculateConfidence(cvData);
             cvData.metadata.formato_original = fileType;
+            cvData.metadata.proveedor_ai = this.currentProvider; // Agregar info del proveedor usado
 
-            console.log(`🎉 Procesamiento completado con confianza: ${cvData.metadata.confianza_extraccion}`);
+            console.log(`🎉 Procesamiento completado con ${this.currentProvider} - confianza: ${cvData.metadata.confianza_extraccion}`);
             return cvData;
 
         } catch (error) {
