@@ -15,6 +15,7 @@ const recommendationRoutes = require("./src/routes/recommendationRoutes");
 const informesRoutes = require("./src/routes/informesRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
 const feedbackRoutes = require("./src/routes/feedbackRoutes");
+const cvRoutes = require("./src/routes/cvRoutes");
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ app.use("/api/recommendations", auth.authenticateJWT, recommendationRoutes);
 app.use("/api/informes", auth.authenticateJWT, informesRoutes);
 app.use("/api/dashboard", auth.authenticateJWT, dashboardRoutes);
 app.use("/api/feedback", auth.authenticateJWT, feedbackRoutes);
+app.use("/api/cv", cvRoutes);
 app.use(error);
 if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => {
