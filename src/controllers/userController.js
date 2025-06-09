@@ -15,7 +15,6 @@ const login = async (req, res) => {
     const user = await userQueries.findUserByEmail(email);
 
     if (!user) {
-      console.log("Usuario no encontrado:", email);
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
@@ -23,17 +22,14 @@ const login = async (req, res) => {
     }
 
     if (!user.password_hash) {
-      console.log("Usuario sin contraseña:", email);
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
       });
     }
-    console.log(password, user.password_hash);
-    const isValid = await bcrypt.compare(password, user.password_hash);
+    const isValid = password === user.password_hash;
 
     if (!isValid) {
-      console.log("Contraseña incorrecta para el usuario:", email);
       return res.status(401).json({
         success: false,
         message: "Credenciales inválidas",
