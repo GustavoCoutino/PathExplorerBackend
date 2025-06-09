@@ -181,7 +181,7 @@ const editProject = async (projectData) => {
 };
 
 const editProjectRole = async (role) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -209,7 +209,7 @@ const editProjectRole = async (role) => {
 };
 
 const editProjectSkill = async (roles) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
   try {
     await client.query("BEGIN");
 
@@ -244,7 +244,7 @@ const addRoleToProject = async (
   id_manager,
   habilidades
 ) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -288,7 +288,7 @@ const addRoleToProject = async (
 };
 
 const deleteRole = async (id_rol) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -347,7 +347,7 @@ const getTeamMembers = async (id_proyecto) => {
 };
 
 const getProjectManager = async (id_manager) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
   try {
     await client.query("BEGIN");
     const result = await db.query(

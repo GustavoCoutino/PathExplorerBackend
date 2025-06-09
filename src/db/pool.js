@@ -27,7 +27,6 @@ if (process.env.NODE_ENV !== "test") {
   });
 }
 
-// ✅ Agregar métodos para transacciones
 const query = (text, params) => pool.query(text, params);
 
 const getClient = async () => {
@@ -35,7 +34,6 @@ const getClient = async () => {
   return client;
 };
 
-// Wrapper para transacciones
 const withTransaction = async (callback) => {
   const client = await pool.connect();
   try {

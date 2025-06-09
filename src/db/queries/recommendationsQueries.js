@@ -7,7 +7,7 @@ const addTrayectoryWithUser = async (
   tiempo_estimado,
   id_persona
 ) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     await client.query("BEGIN");
@@ -44,7 +44,7 @@ const addTrayectoryWithUser = async (
 };
 
 const getUserTrayectoria = async (id_persona) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     const result = await client.query(
@@ -65,7 +65,7 @@ const getUserTrayectoria = async (id_persona) => {
 };
 
 const getAvailableRoles = async () => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     const result = await client.query(
@@ -82,7 +82,7 @@ const getAvailableRoles = async () => {
 };
 
 const getProjectByProjectId = async (id_rol) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     const result = await client.query(
@@ -99,7 +99,7 @@ const getProjectByProjectId = async (id_rol) => {
 };
 
 const getRoleSkills = async (id_rol) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     const result = await client.query(
@@ -119,7 +119,7 @@ const getRoleSkills = async (id_rol) => {
 };
 
 const getManager = async (id_persona) => {
-  const client = await db.connect();
+  const client = await db.pool.connect();
 
   try {
     const result = await client.query(
