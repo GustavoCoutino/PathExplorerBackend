@@ -147,7 +147,6 @@ async function generateCourseAndCertRecommendations(
   ]);
 
   const result = await chain.invoke(inputParams);
-
   try {
     courseRecommendationsCache.set(cacheKey, result);
 
