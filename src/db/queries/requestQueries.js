@@ -12,8 +12,10 @@ const getAssignmentRequests = async (id_administrador) => {
             evaluacion.solicitud_asignacion sa
         JOIN 
             personas.manager m ON sa.id_manager = m.id_manager
+        JOIN
+            personas.empleado e ON sa.id_empleado = e.id_empleado
         JOIN 
-            personas.persona p ON m.id_persona = p.id_persona
+            personas.persona p ON e.id_persona = p.id_persona
         JOIN 
             recursos.rol r ON sa.id_rol = r.id_rol
         JOIN 
