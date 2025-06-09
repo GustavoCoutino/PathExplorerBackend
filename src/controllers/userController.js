@@ -1,5 +1,6 @@
 const userQueries = require("../db/queries/userQueries");
 const auth = require("../middleware/auth");
+const bcrypt = require("bcryptjs");
 
 const login = async (req, res) => {
   try {
@@ -26,9 +27,8 @@ const login = async (req, res) => {
         message: "Credenciales inválidas",
       });
     }
-    // Todavia no estan hasheados en la base de datos
-    //const isValid = await bcrypt.compare(password, user.password_hash);
-    const isValid = password === user.password_hash;
+
+    const isValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isValid) {
       return res.status(401).json({
