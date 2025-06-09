@@ -5,14 +5,19 @@ const notificationsQueries = require("../db/queries/notificationsQueries");
 const getUserProjectAndRole = async (req, res) => {
   const id_empleado = req.body.id_empleado;
   try {
-    const userProject = await projectQueries.getUserProject(id_empleado);
+    const roleData = await userQueries.determineUserType(id_empleado);
+    const userProject = await projectQueries.getUserProject(
+      roleData.roleData.id_empleado
+    );
     if (userProject.length === 0) {
       return res.status(200).json({
         hasProject: false,
         message: "Este usuario no tiene proyectos asignados",
       });
     }
-    const userRole = await projectQueries.getUserRoleInProject(id_empleado);
+    const userRole = await projectQueries.getUserRoleInProject(
+      roleData.roleData.id_empleado
+    );
     const id_proyecto = userProject[0].id_proyecto;
     const userSkills = await projectQueries.getUserSkillsInRole(
       userRole[0].id_rol
