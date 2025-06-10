@@ -294,24 +294,26 @@ const getUserCourses = async (id_persona) => {
 const getUserProfessionalHistory = async (id_persona) => {
   try {
     const result = await db.query(
-      `
-      SELECT 
-          p.Nombre,
-          p.Apellido,
-          pf.Historial_Profesional,
-          pf.Puesto_Actual AS Role,
-          m.Descripcion AS Achievements
-      FROM 
-          personas.PERSONA p
-      JOIN 
-          personas.PERFIL pf ON p.ID_Persona = pf.ID_Perfil
-      LEFT JOIN
-          desarrollo.META_PROFESIONAL m ON p.ID_Persona = m.id_meta
-      WHERE
-          p.ID_Persona = $1
-      `,
-      [id_persona]
+        `
+          SELECT
+            p.nombre,           -- ← minúscula
+            p.apellido,         -- ← minúscula  
+            pf.historial_profesional,  -- ← snake_case
+            pf.puesto_actual AS role,  -- ← snake_case
+            m.descripcion AS achievements
+          FROM
+            personas.persona p
+              JOIN
+            personas.perfil pf ON p.id_persona = pf.id_persona  -- ← Corregido el JOIN
+              LEFT JOIN
+            desarrollo.meta_profesional m ON p.id_persona = m.id_persona
+          WHERE
+            p.id_persona = $1
+        `,
+        [id_persona]
     );
+
+    console.log('SQL Query Result:', result.rows); // ← Debug log
     return result.rows || [];
   } catch (error) {
     console.error("Error getting user professional history:", error);
