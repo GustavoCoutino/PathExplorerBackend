@@ -134,8 +134,11 @@ const createUser = async (userData) => {
         userData.historial_profesional,
       ]
     );
+
+    await client.query("COMMIT");
     return { id_persona, message: "Usuario creado con éxito" };
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Error creating user:", error);
     throw error;
   }
