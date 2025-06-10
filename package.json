@@ -4,6 +4,7 @@
   "description": "<div align=\"left\">   <p>El sistema Path Explorer será una aplicación web que abarca la sede Accenture Monterrey, la cual cuenta con alrededor de 1200 empleados. Permitirá centralizar la información sobre historial profesional, y habilidades de los empleados, facilitando la planificación de carreras y la asignación de roles adecuados. Este repositorio contiene el backend del sistema, implementando APIs RESTful optimizadas para consultas complejas de perfiles y análisis de trayectorias profesionales, asegurando también altos estándares de seguridad para la protección de datos sensibles de los colaboradores.</p> </div>",
   "main": "app.js",
   "scripts": {
+    "dev": "node app.js",
     "start": "node app.js",
     "start-test": "NODE_ENV=test node app.js",
     "test": "NODE_ENV=test jest",

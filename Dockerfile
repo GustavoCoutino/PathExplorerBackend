@@ -1,45 +1,27 @@
-FROM node:18-alpine
+# 1) Stage común: instala deps nativas y tus paquetes
+FROM node:18-alpine AS base
 
-# Set working directory
-WORKDIR /app
-
-# Install system dependencies for canvas and other native modules
+# deps para canvas, si las usas
 RUN apk add --no-cache \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    librsvg-dev \
-    pixman-dev \
-    python3 \
-    make \
-    g++
+    python3 make g++ \
+    cairo-dev jpeg-dev pango-dev giflib-dev pkgconfig
 
-# Copy package files
+WORKDIR /app
 COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
+RUN npm ci
 COPY . .
 
-# Create uploads directory if needed
-RUN mkdir -p uploads
-
-# Expose port
+# 2) Stage de desarrollo: reutiliza base y arranca el dev server
+FROM base AS dev
 EXPOSE 4000
+CMD ["npm", "run", "dev"]
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# 3) Stage de producción (opcional)
+FROM base AS build
+RUN npm run build
 
-# Change ownership of the app directory
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node healthcheck.js || exit 1
-
-CMD ["npm", "start"]
+FROM node:18-alpine AS prod
+WORKDIR /app
+COPY --from=build /app ./
+EXPOSE 4000
+CMD ["npm", "start"]    # o tu script de producción
