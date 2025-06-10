@@ -69,7 +69,7 @@ app.use("/api/recommendations", auth.authenticateJWT, recommendationRoutes);
 app.use("/api/informes", auth.authenticateJWT, informesRoutes);
 app.use("/api/dashboard", auth.authenticateJWT, dashboardRoutes);
 app.use("/api/feedback", auth.authenticateJWT, feedbackRoutes);
-app.use("/api/cv", cvRoutes);
+app.use("/api/cv", auth.authenticateJWT, cvRoutes);
 app.use(error);
 if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => {

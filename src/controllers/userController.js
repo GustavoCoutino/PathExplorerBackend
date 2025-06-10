@@ -409,9 +409,10 @@ const getUserCourses = async (req, res) => {
 const getUserProfessionalHistory = async (req, res) => {
   try {
     const userId =
-      req.user.role === "administrador" && req.query.id_persona
-        ? req.query.id_persona
-        : req.user.id_persona;
+        req.user.role === "administrador" && req.query.id_persona
+            ? req.query.id_persona
+            : req.user.id_persona;
+
     if (!userId) {
       return res.status(400).json({
         success: false,
@@ -419,8 +420,13 @@ const getUserProfessionalHistory = async (req, res) => {
       });
     }
 
+    console.log('Fetching professional history for user ID:', userId); // ← Debug log
+
     const professionalHistoryResults =
-      await userQueries.getUserProfessionalHistory(userId);
+        await userQueries.getUserProfessionalHistory(userId);
+
+    console.log('Professional History Results:', professionalHistoryResults); // ← Debug log
+
     const formattedHistory = professionalHistoryResults.map((entry) => ({
       nombre: entry.nombre,
       apellido: entry.apellido,
@@ -428,6 +434,8 @@ const getUserProfessionalHistory = async (req, res) => {
       role: entry.role,
       achievements: entry.achievements,
     }));
+
+    console.log('Formatted History:', formattedHistory);
 
     return res.status(200).json({
       success: true,
