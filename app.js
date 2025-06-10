@@ -19,8 +19,21 @@ const cvRoutes = require("./src/routes/cvRoutes");
 
 dotenv.config();
 
+const pool = require("./src/db/pool");
+
 const app = express();
 const port = process.env.PORT || 4000;
+
+// Health-check de la base de datos
+app.get("/__dbtest", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT NOW() AS now");
+    return res.json({ ok: true, now: rows[0].now });
+  } catch (err) {
+    console.error("DB Test Error:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 const corsOptions = {
   origin: function (origin, callback) {
