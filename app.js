@@ -28,6 +28,7 @@ const corsOptions = {
 
     const allowedOriginPatterns = [
       "https://path-explorer-front-end-rogj.vercel.app",
+      "https://path-explorer-front-end-sand.vercel.app/",
       "http://localhost:3000",
     ];
 
