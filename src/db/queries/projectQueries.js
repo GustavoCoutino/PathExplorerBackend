@@ -147,7 +147,8 @@ CROSS JOIN personas.empleado e
 LEFT JOIN personas.persona_habilidad ph ON ph.id_persona = e.id_persona AND ph.id_habilidad = rh.id_habilidad
 JOIN personas.persona p ON e.id_persona = p.id_persona
 JOIN personas.perfil pf ON p.id_persona = pf.id_persona
-WHERE rh.id_rol = $1
+WHERE rh.id_rol = $1 
+  AND e.estado = 'BANCA'
 GROUP BY e.id_empleado, e.porcentaje_disponibilidad, p.nombre, p.apellido, pf.puesto_actual
 ORDER BY porcentaje_match DESC;
       `,
