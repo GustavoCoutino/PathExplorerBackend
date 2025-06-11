@@ -22,6 +22,7 @@ const upload = multer({
 });
 
 const cvProcessor = new CVProcessor();
+
 const uploadAndSaveCV = async (req, res) => {
   try {
     if (!req.file) {
@@ -52,7 +53,6 @@ const uploadAndSaveCV = async (req, res) => {
         saved: savedData,
         summary: {
           certifications_added: savedData.certifications.length,
-          courses_added: savedData.courses.length,
           skills_added: savedData.skills.length,
           profile_updated: !!savedData.profile,
         },
@@ -108,7 +108,6 @@ const extractCVData = async (req, res) => {
   }
 };
 
-// Health check específico para CV upload
 const healthCheck = async (req, res) => {
   try {
     return res.status(200).json({
@@ -118,9 +117,9 @@ const healthCheck = async (req, res) => {
       features: [
         "🤖 Extracción con IA avanzada",
         "💾 Guardado automático en BD",
-        "🔄 Mapeo a tablas existentes",
+        "🔄 Solo historial, habilidades y certificaciones",
         "📊 Vista previa editable",
-        "🌍 Soporte multiidioma",
+        "🛡️ Protege datos personales existentes",
       ],
       supported_formats: ["PDF", "DOCX"],
       max_file_size: "10MB",
